@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SteelForce: Escape from Zone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #game-container canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s;
+    }
+
+    .loading-title {
+      color: #fff;
+      font-size: 24px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .loading-bar {
+      width: 400px;
+      height: 20px;
+      background: #333;
+      border: 2px solid #666;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .loading-progress {
+      width: 0%;
+      height: 100%;
+      background: #00ff00;
+      transition: width 0.3s;
+    }
+
+    .loading-text {
+      color: #fff;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    #pause-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .pause-title {
+      color: #fff;
+      font-size: 48px;
+      margin-bottom: 40px;
+    }
+
+    .pause-button {
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 15px 40px;
+      margin: 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .pause-button:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .error-container {
+      color: #ff0000;
+      text-align: center;
+    }
+
+    .error-container h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    .error-container button {
+      margin-top: 20px;
+      padding: 10px 30px;
+      font-family: 'Press Start 2P', monospace;
+      background: #ff0000;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <div class="loading-title">SteelForce</div>
+    <div class="loading-bar">
+      <div id="loading-progress" class="loading-progress"></div>
+    </div>
+    <div class="loading-text">Загрузка...</div>
+  </div>
+
+  <div id="pause-menu">
+    <div class="pause-title">ПАУЗА</div>
+    <button class="pause-button" onclick="window.__GAME_RESUME__()">Продолжить</button>
+    <button class="pause-button" onclick="window.__GAME_RESTART__()">Заново</button>
+  </div>
+
+  <div id="game-container"></div>
+
+  <script type="module" src="/src/main.ts"></script>
+
+  <script>
+    // Глобальные функции для меню паузы
+    window.__GAME_RESUME__ = () => {
+      window.dispatchEvent(new CustomEvent('game:resume'));
+    };
+
+    window.__GAME_RESTART__ = () => {
+      window.dispatchEvent(new CustomEvent('game:restart'));
+    };
+  </script>
+</body>
+</html>
