@@ -644,7 +644,7 @@ export class AssemblyScene extends BaseScene {
     const fill = new Graphics();
     fill.rect(0, 0, 200, 15);
     fill.fill({ color: 0x00ff00 });
-    fill.name = "healthFill";
+    fill.label = "healthFill";
 
     const text = new Text({
       text: "HP",
@@ -655,7 +655,7 @@ export class AssemblyScene extends BaseScene {
       }),
     });
     text.position.set(5, 2);
-    text.name = "healthText";
+    text.label = "healthText";
 
     container.addChild(bg, fill, text);
     return container;
@@ -1081,7 +1081,7 @@ export class AssemblyScene extends BaseScene {
     }
 
     // Обновление полосы здоровья
-    const healthFill = this.healthBar.getChildByName("healthFill") as Graphics;
+    const healthFill = this.healthBar.getChildByLabel("healthFill") as Graphics;
     if (healthFill) {
       healthFill.clear();
       healthFill.rect(0, 0, 200 * 0.9, 15); // 90% здоровья

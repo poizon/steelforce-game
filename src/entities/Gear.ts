@@ -307,7 +307,7 @@ export class Gear extends Container {
       const circle = new Graphics();
       circle.circle(0, 0, 10);
       circle.stroke({ width: 2, color: 0xffffff, alpha: 0.8 });
-      circle.name = `collectCircle_${i}`;
+      circle.label = `collectCircle_${i}`;
       this.collectEffect.addChild(circle);
     }
 
@@ -404,7 +404,7 @@ export class Gear extends Container {
   private updateCollectAnimation(delta: number): void {
     // Расширяющиеся круги
     this.collectEffect.children.forEach(child => {
-      if (child instanceof Graphics && child.name?.startsWith('collectCircle')) {
+      if (child instanceof Graphics && child.label?.startsWith('collectCircle')) {
         child.scale.set(child.scale.x + delta * 0.01);
         child.alpha -= delta * 0.005;
       }
@@ -471,7 +471,7 @@ export class Gear extends Container {
 
     // Сбрасываем круги
     this.collectEffect.children.forEach(child => {
-      if (child instanceof Graphics && child.name?.startsWith('collectCircle')) {
+      if (child instanceof Graphics && child.label?.startsWith('collectCircle')) {
         child.scale.set(1);
         child.alpha = 0.8;
       }

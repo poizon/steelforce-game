@@ -610,7 +610,7 @@ export class ChemicalScene extends BaseScene {
       }),
     });
     text.position.set(10, 8);
-    text.name = 'maskText';
+    text.label = 'maskText';
     container.addChild(text);
 
     return container;
@@ -773,7 +773,7 @@ export class ChemicalScene extends BaseScene {
       }),
     });
     text.position.set(40, 12);
-    text.name = 'toxicityText';
+    text.label = 'toxicityText';
     container.addChild(text);
 
     return container;
@@ -1349,7 +1349,7 @@ export class ChemicalScene extends BaseScene {
    */
   private updateHUD(): void {
     // Обновление индикатора токсичности
-    const toxicityText = this.dangerIndicator.getChildByName('toxicityText') as Text;
+    const toxicityText = this.dangerIndicator.getChildByLabel('toxicityText') as Text;
     if (toxicityText) {
       toxicityText.text = `Токсичность: ${Math.floor(this.toxicLevel)}%`;
 
@@ -1367,7 +1367,7 @@ export class ChemicalScene extends BaseScene {
     // Обновление индикатора противогаза
     if (this.isWearingGasMask) {
       this.gasMaskIndicator.visible = true;
-      const maskText = this.gasMaskIndicator.getChildByName('maskText') as Text;
+      const maskText = this.gasMaskIndicator.getChildByLabel('maskText') as Text;
       if (maskText) {
         maskText.text = `Противогаз: ${Math.floor(this.gasMaskDurability)}%`;
       }

@@ -47,6 +47,13 @@ export class AudioManager {
   private isAudioContextInitialized: boolean = false;
   private soundIdCounter: number = 0;
 
+  // Очередь звуков, ожидающих инициализации AudioContext
+  private pendingPlays: Array<{
+    alias: string;
+    config: AudioConfig;
+    resolve: (state: AudioState | null) => void;
+  }> = [];
+
   private readonly defaultCategoryConfig: Record<AudioCategory, Omit<AudioChannel, 'activeSounds'>> = {
     music: { volume: 0.7, isMuted: false, maxSimultaneous: 2 },
     sfx: { volume: 1.0, isMuted: false, maxSimultaneous: 8 },
@@ -65,22 +72,17 @@ export class AudioManager {
     this.setupEventListeners();
   }
 
-  /**
-   * Инициализирует аудиоканалы
-   */
   private initChannels(): void {
     for (const [category, config] of Object.entries(this.defaultCategoryConfig)) {
       this.channels.set(category as AudioCategory, {
         ...config,
-        activeSounds: new Map(), // Создаём новую Map для каждого канала
+        activeSounds: new Map(),
       });
     }
   }
 
-  /**
-   * Настройка слушателей событий
-   */
   private setupEventListeners(): void {
+    // Автоматическая пауза при сворачивании окна
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.pauseAll();
@@ -89,35 +91,73 @@ export class AudioManager {
       }
     });
 
-    const initAudio = () => this.initAudioContext();
-    document.addEventListener('click', initAudio, { once: true });
-    document.addEventListener('keydown', initAudio, { once: true });
-    document.addEventListener('touchstart', initAudio, { once: true });
+    // Инициализация AudioContext при ПЕРВОМ взаимодействии пользователя
+    const initOnInteraction = () => {
+      this.initAudioContext();
+    };
+
+    // Слушаем разные типы взаимодействий
+    document.addEventListener('click', initOnInteraction, { once: true });
+    document.addEventListener('keydown', initOnInteraction, { once: true });
+    document.addEventListener('touchstart', initOnInteraction, { once: true });
+    document.addEventListener('mousedown', initOnInteraction, { once: true });
   }
 
   /**
-   * Инициализирует AudioContext
+   * Инициализирует AudioContext (должен вызываться после взаимодействия пользователя)
    */
   private async initAudioContext(): Promise<void> {
     if (this.isAudioContextInitialized) return;
 
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+
       if (!AudioContextClass) {
-        console.warn('AudioContext not supported');
+        console.warn('AudioContext not supported in this browser');
         return;
       }
 
       this.audioContext = new AudioContextClass();
 
+      // Если контекст в состоянии suspended, пробуем возобновить
       if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
+        try {
+          await this.audioContext.resume();
+        } catch (error) {
+          console.warn('Could not resume AudioContext:', error);
+          // Не устанавливаем флаг инициализации, чтобы попробовать позже
+          return;
+        }
       }
 
       this.isAudioContextInitialized = true;
+      console.log('AudioContext initialized successfully');
+
       this.eventBus.emit('audio:context:initialized', {});
+
+      // Воспроизводим все ожидающие звуки
+      await this.processPendingPlays();
+
     } catch (error) {
       console.error('Failed to initialize AudioContext:', error);
+    }
+  }
+
+  /**
+   * Обрабатывает очередь ожидающих воспроизведения звуков
+   */
+  private async processPendingPlays(): Promise<void> {
+    const pending = [...this.pendingPlays];
+    this.pendingPlays = [];
+
+    for (const { alias, config, resolve } of pending) {
+      try {
+        const state = await this.play(alias, config);
+        resolve(state);
+      } catch (error) {
+        console.error(`Failed to play pending sound "${alias}":`, error);
+        resolve(null);
+      }
     }
   }
 
@@ -128,10 +168,20 @@ export class AudioManager {
     alias: string,
     config: Partial<AudioConfig> = {}
   ): Promise<AudioState | null> {
+    // Если AudioContext ещё не инициализирован, добавляем в очередь
     if (!this.isAudioContextInitialized) {
-      await this.initAudioContext();
+      console.log(`AudioContext not ready, queuing sound: "${alias}"`);
+
+      return new Promise(resolve => {
+        this.pendingPlays.push({
+          alias,
+          config: this.mergeConfig(config),
+          resolve
+        });
+      });
     }
 
+    // Проверяем, не заблокирован ли звук глобально
     if (this.isGlobalMuted) return null;
 
     try {
@@ -224,7 +274,18 @@ export class AudioManager {
         instance.currentTime = 0;
       }
 
-      await instance.play();
+      // Используем play() с обработкой ошибок
+      try {
+        await instance.play();
+      } catch (playError) {
+        // Если не удалось воспроизвести, пробуем ещё раз после инициализации контекста
+        if (!this.isAudioContextInitialized) {
+          await this.initAudioContext();
+          await instance.play();
+        } else {
+          throw playError;
+        }
+      }
 
       state.isPlaying = true;
       state.isPaused = false;
@@ -285,12 +346,9 @@ export class AudioManager {
       instance.pause();
       instance.currentTime = 0;
 
-      // Удаляем обработчики перед удалением src
-      instance.removeEventListener('ended', () => {});
-      instance.removeEventListener('error', () => {});
-
-      // Не устанавливаем src = '', это может вызвать ошибки
-      // Вместо этого позволяем сборщику мусора очистить элемент
+      // Удаляем обработчики
+      instance.onended = null;
+      instance.onerror = null;
 
       this.removeFromActive(state);
 
@@ -335,7 +393,7 @@ export class AudioManager {
   /**
    * Воспроизводит фоновую музыку
    */
-  public playMusic(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playMusic(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
     // Останавливаем текущую музыку перед запуском новой
     this.stopCategory('music', 500);
 
@@ -352,7 +410,7 @@ export class AudioManager {
   /**
    * Воспроизводит звуковой эффект
    */
-  public playSFX(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playSFX(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
     return this.play(alias, {
       category: 'sfx',
       loop: false,
@@ -364,7 +422,7 @@ export class AudioManager {
   /**
    * Воспроизводит звук окружения
    */
-  public playAmbient(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playAmbient(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
     return this.play(alias, {
       category: 'ambient',
       loop: true,
@@ -377,7 +435,7 @@ export class AudioManager {
   /**
    * Воспроизводит озвучку/диалог
    */
-  public playVoice(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playVoice(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
     return this.play(alias, {
       category: 'voice',
       loop: false,
@@ -477,7 +535,6 @@ export class AudioManager {
 
     channel.isMuted = true;
 
-    // Останавливаем все звуки категории
     const states = Array.from(channel.activeSounds.values());
     states.forEach(state => this.forceStop(state));
   }
@@ -543,8 +600,6 @@ export class AudioManager {
     const fade = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      // Используем easeInOutCubic для более плавного звука
       const eased = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -569,8 +624,6 @@ export class AudioManager {
     const fade = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      // Используем easeOutCubic
       const eased = 1 - Math.pow(1 - progress, 3);
 
       state.instance.volume = startVolume * (1 - eased);
@@ -654,7 +707,7 @@ export class AudioManager {
    * Настройка обработчиков завершения звука
    */
   private setupSoundHandlers(state: AudioState): void {
-    const onEnded = () => {
+    state.instance.onended = () => {
       if (state.config.loop) {
         state.instance.currentTime = 0;
         state.instance.play().catch(error => {
@@ -670,17 +723,11 @@ export class AudioManager {
       }
     };
 
-    const onError = (error: Event | string) => {
+    state.instance.onerror = (error) => {
       console.error(`Audio error for "${state.alias}":`, error);
       this.removeFromActive(state);
       this.processQueue();
     };
-
-    state.instance.addEventListener('ended', onEnded);
-    state.instance.addEventListener('error', onError);
-
-    // Сохраняем ссылки для возможной очистки
-    (state as any).__handlers = { onEnded, onError };
   }
 
   /**
@@ -705,23 +752,15 @@ export class AudioManager {
     masterVolume: number;
     isMuted: boolean;
     activeCount: number;
-    categories: Record<AudioCategory, { volume: number; isMuted: boolean; activeCount: number }>;
+    audioContextReady: boolean;
+    pendingCount: number;
   } {
-    const categories = {} as Record<AudioCategory, { volume: number; isMuted: boolean; activeCount: number }>;
-
-    for (const [category, channel] of this.channels.entries()) {
-      categories[category] = {
-        volume: channel.volume,
-        isMuted: channel.isMuted,
-        activeCount: channel.activeSounds.size,
-      };
-    }
-
     return {
       masterVolume: this.masterVolume,
       isMuted: this.isGlobalMuted,
       activeCount: this.activeSounds.size,
-      categories,
+      audioContextReady: this.isAudioContextInitialized,
+      pendingCount: this.pendingPlays.length,
     };
   }
 
@@ -739,17 +778,9 @@ export class AudioManager {
    * Очищает все ресурсы
    */
   public destroy(): void {
-    // Очищаем обработчики перед остановкой
-    for (const state of this.activeSounds.values()) {
-      const handlers = (state as any).__handlers;
-      if (handlers) {
-        state.instance.removeEventListener('ended', handlers.onEnded);
-        state.instance.removeEventListener('error', handlers.onError);
-      }
-    }
-
     this.stopAll();
     this.waitingQueue.length = 0;
+    this.pendingPlays.length = 0;
     this.activeSounds.clear();
 
     for (const channel of this.channels.values()) {
@@ -773,22 +804,15 @@ export class AudioManager {
     console.group('AudioManager Debug');
     console.log('Master volume:', this.masterVolume);
     console.log('Global muted:', this.isGlobalMuted);
+    console.log('AudioContext ready:', this.isAudioContextInitialized);
     console.log('Active sounds:', this.activeSounds.size);
+    console.log('Pending plays:', this.pendingPlays.length);
     console.log('Queue size:', this.waitingQueue.length);
-    console.log('Audio context:', this.audioContext?.state);
-
-    console.group('Categories:');
-    for (const [category, channel] of this.channels.entries()) {
-      console.log(
-        `${category}: volume=${channel.volume}, muted=${channel.isMuted}, active=${channel.activeSounds.size}`
-      );
-    }
-    console.groupEnd();
 
     console.group('Active sounds:');
     for (const [id, state] of this.activeSounds.entries()) {
       console.log(
-        `${id}: alias=${state.alias}, playing=${state.isPlaying}, paused=${state.isPaused}, volume=${state.instance.volume}`
+        `${id}: alias=${state.alias}, playing=${state.isPlaying}, paused=${state.isPaused}`
       );
     }
     console.groupEnd();

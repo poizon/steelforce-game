@@ -131,7 +131,7 @@ export class MenuScene extends BaseScene {
       this.background.height = this.app.screen.height;
 
       // Добавляем фильтр размытия для глубины
-      const blurFilter = new BlurFilter(2);
+      const blurFilter = new BlurFilter({ strength: 2 });
       this.background.filters = [blurFilter];
 
       this.addChild(this.background);
@@ -361,7 +361,7 @@ export class MenuScene extends BaseScene {
     indicator.anchor.set(0.5);
     indicator.x = -170;
     indicator.alpha = 0;
-    indicator.name = 'indicator';
+    indicator.label = 'indicator';
     container.addChild(indicator);
 
     return container;
@@ -460,7 +460,7 @@ export class MenuScene extends BaseScene {
     for (let i = 0; i < this.buttons.length; i++) {
       const button = this.buttons[i];
       const bg = button.children[0] as Graphics;
-      const indicator = button.getChildByName('indicator') as Text;
+      const indicator = button.getChildByLabel('indicator') as Text;
 
       if (!bg || !indicator) continue;
 

@@ -45,6 +45,7 @@ class Game {
     // Инициализируем сервисы
     this.inputManager = new InputManager();
     this.audioManager = new AudioManager(this.eventBus);
+    // await this.audioManager.initialize(); // Инициализируем AudioContext
     this.assetLoader = new AssetLoader(this.eventBus);
 
     // Настраиваем отслеживание прогресса загрузки
@@ -139,56 +140,56 @@ class Game {
             { alias: 'character-m', src: 'assets/sprites/character-m.png' },
           ],
         },
-        {
-          name: 'platform',
-          assets: [
-            { alias: 'platform-background', src: 'assets/backgrounds/platform-bg.png' },
-            { alias: 'platform-tiles', src: 'assets/sprites/platform-tiles.png' },
-            { alias: 'player-sprite', src: 'assets/sprites/player-sprite.json', loadType: 'spritesheet' as const },
-          ],
-        },
-        {
-          name: 'elevator',
-          assets: [
-            { alias: 'elevator-background', src: 'assets/backgrounds/elevator-bg.png' },
-            { alias: 'elevator-platform', src: 'assets/sprites/elevator-platform.png' },
-          ],
-        },
-        {
-          name: 'assembly',
-          assets: [
-            { alias: 'assembly-background', src: 'assets/backgrounds/assembly-bg.png' },
-            { alias: 'zombie-worker', src: 'assets/sprites/zombie-worker.png' },
-            { alias: 'gear', src: 'assets/sprites/gear.png' },
-            { alias: 'conveyor', src: 'assets/sprites/conveyor.png' },
-          ],
-        },
-        {
-          name: 'chemical',
-          assets: [
-            { alias: 'chemical-background', src: 'assets/backgrounds/chemical-bg.png' },
-            { alias: 'mutated-worker', src: 'assets/sprites/mutated-worker.png' },
-            { alias: 'gas-effect', src: 'assets/sprites/gas-effect.png' },
-          ],
-        },
-        {
-          name: 'soldiers',
-          assets: [
-            { alias: 'street-background', src: 'assets/backgrounds/street-bg.png' },
-            { alias: 'soldier', src: 'assets/sprites/soldier.png' },
-          ],
-        },
-        {
-          name: 'audio',
-          assets: [
-            { alias: 'menu-music', src: 'assets/sounds/menu-music.mp3', loadType: 'sound' as const },
-            { alias: 'gameplay-music', src: 'assets/sounds/gameplay-music.mp3', loadType: 'sound' as const },
-            { alias: 'radio-broadcast', src: 'assets/sounds/radio-broadcast.mp3', loadType: 'sound' as const },
-            { alias: 'zombie-growl', src: 'assets/sounds/zombie-growl.mp3', loadType: 'sound' as const },
-            { alias: 'gear-collect', src: 'assets/sounds/gear-collect.mp3', loadType: 'sound' as const },
-            { alias: 'dialog-click', src: 'assets/sounds/dialog-click.mp3', loadType: 'sound' as const },
-          ],
-        },
+        // {
+        //   name: 'platform',
+        //   assets: [
+        //     { alias: 'platform-background', src: 'assets/backgrounds/platform-bg.png' },
+        //     { alias: 'platform-tiles', src: 'assets/sprites/platform-tiles.png' },
+        //     { alias: 'player-sprite', src: 'assets/sprites/player-sprite.json', loadType: 'spritesheet' as const },
+        //   ],
+        // },
+        // {
+        //   name: 'elevator',
+        //   assets: [
+        //     { alias: 'elevator-background', src: 'assets/backgrounds/elevator-bg.png' },
+        //     { alias: 'elevator-platform', src: 'assets/sprites/elevator-platform.png' },
+        //   ],
+        // },
+        // {
+        //   name: 'assembly',
+        //   assets: [
+        //     { alias: 'assembly-background', src: 'assets/backgrounds/assembly-bg.png' },
+        //     { alias: 'zombie-worker', src: 'assets/sprites/zombie-worker.png' },
+        //     { alias: 'gear', src: 'assets/sprites/gear.png' },
+        //     { alias: 'conveyor', src: 'assets/sprites/conveyor.png' },
+        //   ],
+        // },
+        // {
+        //   name: 'chemical',
+        //   assets: [
+        //     { alias: 'chemical-background', src: 'assets/backgrounds/chemical-bg.png' },
+        //     { alias: 'mutated-worker', src: 'assets/sprites/mutated-worker.png' },
+        //     { alias: 'gas-effect', src: 'assets/sprites/gas-effect.png' },
+        //   ],
+        // },
+        // {
+        //   name: 'soldiers',
+        //   assets: [
+        //     { alias: 'street-background', src: 'assets/backgrounds/street-bg.png' },
+        //     { alias: 'soldier', src: 'assets/sprites/soldier.png' },
+        //   ],
+        // },
+        // {
+        //   name: 'audio',
+        //   assets: [
+        //     { alias: 'menu-music', src: 'assets/sounds/menu-music.mp3', loadType: 'sound' as const },
+        //     { alias: 'gameplay-music', src: 'assets/sounds/gameplay-music.mp3', loadType: 'sound' as const },
+        //     { alias: 'radio-broadcast', src: 'assets/sounds/radio-broadcast.mp3', loadType: 'sound' as const },
+        //     { alias: 'zombie-growl', src: 'assets/sounds/zombie-growl.mp3', loadType: 'sound' as const },
+        //     { alias: 'gear-collect', src: 'assets/sounds/gear-collect.mp3', loadType: 'sound' as const },
+        //     { alias: 'dialog-click', src: 'assets/sounds/dialog-click.mp3', loadType: 'sound' as const },
+        //   ],
+        // },
       ],
     };
 

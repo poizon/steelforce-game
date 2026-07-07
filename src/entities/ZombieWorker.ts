@@ -330,7 +330,7 @@ export class ZombieWorker extends Container {
     const fill = new Graphics();
     fill.rect(-15, -2, 30, 4);
     fill.fill({ color: 0xff0000 });
-    fill.name = "healthFill";
+    fill.label = "healthFill";
 
     this.healthBar.addChild(bg, fill);
     this.healthBar.visible = false;
@@ -662,7 +662,7 @@ export class ZombieWorker extends Container {
     // Полоса здоровья
     if (this.currentHealth < this.health) {
       this.healthBar.visible = true;
-      const fill = this.healthBar.getChildByName("healthFill") as Graphics;
+      const fill = this.healthBar.getChildByLabel("healthFill") as Graphics;
       if (fill) {
         fill.clear();
         const percentage = this.currentHealth / this.health;

@@ -877,7 +877,7 @@ export class SoldiersScene extends BaseScene {
         }),
       });
       itemText.position.set(30, 60 + index * 25);
-      itemText.name = `quest_item_${item.id}`;
+      itemText.label = `quest_item_${item.id}`;
       container.addChild(itemText);
     });
 
@@ -1370,7 +1370,7 @@ export class SoldiersScene extends BaseScene {
    */
   private updateQuestLog(): void {
     this.questItems.forEach(item => {
-      const textElement = this.questLog.getChildByName(`quest_item_${item.id}`) as Text;
+      const textElement = this.questLog.getChildByLabel(`quest_item_${item.id}`) as Text;
       if (textElement) {
         textElement.text = `${item.name}: ${item.found ? (item.delivered ? 'Доставлен' : 'Найден') : 'Не найден'}`;
         textElement.style.fill = item.delivered ? 0x00ff00 : item.found ? 0xffff00 : 0xff0000;
