@@ -1,16 +1,16 @@
 // src/entities/Soldier.ts
-import { Container, Graphics, Text, Texture } from 'pixi.js';
-import { EventBus } from '../core/EventBus';
+import * as pixiJs from "pixi.js";
+import { EventBus } from "../core/EventBus";
 
-export type SoldierType = 'sergeant' | 'private';
+export type SoldierType = "sergeant" | "private";
 
-export class Soldier extends Container {
+export class Soldier extends pixiJs.Container {
   private eventBus: EventBus;
   private soldierType: SoldierType;
-  private graphics: Graphics;
-  private weaponGraphics: Graphics;
+  private graphics: pixiJs.Graphics;
+  private weaponGraphics: pixiJs.Graphics;
 
-  constructor(eventBus: EventBus, type: SoldierType = 'private') {
+  constructor(eventBus: EventBus, type: SoldierType = "private") {
     super();
     this.eventBus = eventBus;
     this.soldierType = type;
@@ -18,10 +18,10 @@ export class Soldier extends Container {
   }
 
   private setup(): void {
-    this.graphics = new Graphics();
+    this.graphics = new pixiJs.Graphics();
 
     // Униформа
-    const uniformColor = this.soldierType === 'sergeant' ? 0x445544 : 0x334433;
+    const uniformColor = this.soldierType === "sergeant" ? 0x445544 : 0x334433;
 
     // Тело
     this.graphics.rect(-8, 0, 16, 25);
@@ -37,7 +37,7 @@ export class Soldier extends Container {
     this.graphics.fill({ color: 0x556655 });
 
     // Очки (у сержанта)
-    if (this.soldierType === 'sergeant') {
+    if (this.soldierType === "sergeant") {
       this.graphics.rect(-5, -9, 4, 3);
       this.graphics.fill({ color: 0x000000 });
       this.graphics.rect(1, -9, 4, 3);
@@ -58,7 +58,7 @@ export class Soldier extends Container {
     this.addChild(this.graphics);
 
     // Оружие
-    this.weaponGraphics = new Graphics();
+    this.weaponGraphics = new pixiJs.Graphics();
     this.weaponGraphics.rect(-2, 10, 3, 15);
     this.weaponGraphics.fill({ color: 0x333333 });
     this.weaponGraphics.rect(-3, 10, 5, 2);
@@ -67,8 +67,8 @@ export class Soldier extends Container {
     this.addChild(this.weaponGraphics);
 
     // Нашивка сержанта
-    if (this.soldierType === 'sergeant') {
-      const stripes = new Graphics();
+    if (this.soldierType === "sergeant") {
+      const stripes = new pixiJs.Graphics();
       stripes.moveTo(-5, 8);
       stripes.lineTo(5, 8);
       stripes.stroke({ width: 1, color: 0xffaa00 });

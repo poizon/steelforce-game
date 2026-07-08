@@ -1,41 +1,41 @@
-import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
-import { EventBus } from '../core/EventBus';
-import { GameEvent } from '../core/EventBus';
+import * as pixiJs from "pixi.js";
+import { EventBus } from "../core/EventBus";
+import { GameEvent } from "../core/EventBus";
 
 export interface GearConfig {
-  points: number;           // Очки за сбор
-  rotationSpeed: number;    // Скорость вращения
-  bobSpeed: number;         // Скорость покачивания
-  bobHeight: number;        // Высота покачивания
-  glowIntensity: number;    // Интенсивность свечения
-  collectDuration: number;  // Длительность анимации сбора (мс)
-  respawnTime: number;      // Время до респавна (мс, 0 = не респавнится)
+  points: number; // Очки за сбор
+  rotationSpeed: number; // Скорость вращения
+  bobSpeed: number; // Скорость покачивания
+  bobHeight: number; // Высота покачивания
+  glowIntensity: number; // Интенсивность свечения
+  collectDuration: number; // Длительность анимации сбора (мс)
+  respawnTime: number; // Время до респавна (мс, 0 = не респавнится)
 }
 
-export type GearType = 'standard' | 'golden' | 'rusty' | 'glowing' | 'large';
-export type GearState = 'idle' | 'collected' | 'respawning';
+export type GearType = "standard" | "golden" | "rusty" | "glowing" | "large";
+export type GearState = "idle" | "collected" | "respawning";
 
-export class Gear extends Container {
+export class Gear extends pixiJs.Container {
   private readonly eventBus: EventBus;
 
   // Конфигурация
   private readonly config: GearConfig;
 
   // Состояние
-  private state: GearState = 'idle';
+  private state: GearState = "idle";
   private collected: boolean = false;
   private respawnTimer: number = 0;
   private animationPhase: number = 0;
 
   // Визуальные элементы
-  private gearGraphic!: Graphics;
-  private centerCircle!: Graphics;
-  private glowEffect!: Graphics;
-  private sparkles: Graphics[] = [];
-  private collectEffect!: Container;
+  private gearGraphic!: pixiJs.Graphics;
+  private centerCircle!: pixiJs.Graphics;
+  private glowEffect!: pixiJs.Graphics;
+  private sparkles: pixiJs.Graphics[] = [];
+  private collectEffect!: pixiJs.Container;
 
   // Текст
-  private pointsText!: Text;
+  private pointsText!: pixiJs.Text;
 
   // Тип шестерёнки
   private gearType: GearType;
@@ -48,8 +48,8 @@ export class Gear extends Container {
 
   constructor(
     eventBus: EventBus,
-    type: GearType = 'standard',
-    config?: Partial<GearConfig>
+    type: GearType = "standard",
+    config?: Partial<GearConfig>,
   ) {
     super();
 
@@ -125,10 +125,10 @@ export class Gear extends Container {
 
     // Размер в зависимости от типа
     switch (this.gearType) {
-      case 'large':
+      case "large":
         this.currentScale = 1.5;
         break;
-      case 'golden':
+      case "golden":
         this.currentScale = 1.2;
         break;
       default:
@@ -136,15 +136,15 @@ export class Gear extends Container {
     }
 
     this.scale.set(this.currentScale);
-    this.eventMode = 'static';
-    this.cursor = 'pointer';
+    this.eventMode = "static";
+    this.cursor = "pointer";
   }
 
   /**
    * Создание графики шестерёнки
    */
   private createGearGraphic(): void {
-    this.gearGraphic = new Graphics();
+    this.gearGraphic = new pixiJs.Graphics();
 
     const colorMap: Record<GearType, number> = {
       standard: 0x888888,
@@ -155,8 +155,9 @@ export class Gear extends Container {
     };
 
     const color = colorMap[this.gearType];
-    const size = this.gearType === 'large' ? 24 : this.gearType === 'golden' ? 18 : 16;
-    const teethCount = this.gearType === 'large' ? 12 : 8;
+    const size =
+      this.gearType === "large" ? 24 : this.gearType === "golden" ? 18 : 16;
+    const teethCount = this.gearType === "large" ? 12 : 8;
     const innerRadius = size * 0.5;
     const outerRadius = size * 0.8;
     const teethHeight = size * 0.3;
@@ -168,19 +169,19 @@ export class Gear extends Container {
 
       this.gearGraphic.moveTo(
         Math.cos(angle) * innerRadius,
-        Math.sin(angle) * innerRadius
+        Math.sin(angle) * innerRadius,
       );
       this.gearGraphic.lineTo(
         Math.cos(angle) * outerRadius,
-        Math.sin(angle) * outerRadius
+        Math.sin(angle) * outerRadius,
       );
       this.gearGraphic.lineTo(
         Math.cos(nextAngle) * outerRadius,
-        Math.sin(nextAngle) * outerRadius
+        Math.sin(nextAngle) * outerRadius,
       );
       this.gearGraphic.lineTo(
         Math.cos(nextAngle) * innerRadius,
-        Math.sin(nextAngle) * innerRadius
+        Math.sin(nextAngle) * innerRadius,
       );
     }
     this.gearGraphic.fill({ color, alpha: 0.9 });
@@ -197,9 +198,12 @@ export class Gear extends Container {
       this.gearGraphic.moveTo(0, 0);
       this.gearGraphic.lineTo(
         Math.cos(angle) * innerRadius * 0.7,
-        Math.sin(angle) * innerRadius * 0.7
+        Math.sin(angle) * innerRadius * 0.7,
       );
-      this.gearGraphic.stroke({ width: 2, color: this.darkenColor(color, 0.2) });
+      this.gearGraphic.stroke({
+        width: 2,
+        color: this.darkenColor(color, 0.2),
+      });
     }
 
     this.addChild(this.gearGraphic);
@@ -209,7 +213,7 @@ export class Gear extends Container {
    * Создание эффекта свечения
    */
   private createGlowEffect(): void {
-    this.glowEffect = new Graphics();
+    this.glowEffect = new pixiJs.Graphics();
 
     const glowColorMap: Record<GearType, number> = {
       standard: 0xaaaaaa,
@@ -220,7 +224,7 @@ export class Gear extends Container {
     };
 
     const glowColor = glowColorMap[this.gearType];
-    const size = this.gearType === 'large' ? 35 : 25;
+    const size = this.gearType === "large" ? 35 : 25;
 
     // Несколько слоёв свечения
     for (let i = 3; i >= 0; i--) {
@@ -237,7 +241,7 @@ export class Gear extends Container {
    * Создание центрального круга
    */
   private createCenterCircle(): void {
-    this.centerCircle = new Graphics();
+    this.centerCircle = new pixiJs.Graphics();
 
     const centerColorMap: Record<GearType, number> = {
       standard: 0x666666,
@@ -248,7 +252,7 @@ export class Gear extends Container {
     };
 
     const centerColor = centerColorMap[this.gearType];
-    const radius = this.gearType === 'large' ? 6 : 4;
+    const radius = this.gearType === "large" ? 6 : 4;
 
     this.centerCircle.circle(0, 0, radius);
     this.centerCircle.fill({ color: centerColor });
@@ -270,10 +274,11 @@ export class Gear extends Container {
     };
 
     const sparkleColor = sparkleColors[this.gearType];
-    const count = this.gearType === 'golden' ? 6 : this.gearType === 'glowing' ? 8 : 4;
+    const count =
+      this.gearType === "golden" ? 6 : this.gearType === "glowing" ? 8 : 4;
 
     for (let i = 0; i < count; i++) {
-      const sparkle = new Graphics();
+      const sparkle = new pixiJs.Graphics();
 
       // Звездочка
       sparkle.moveTo(0, -3);
@@ -299,12 +304,12 @@ export class Gear extends Container {
    * Создание эффекта сбора
    */
   private createCollectEffect(): void {
-    this.collectEffect = new Container();
+    this.collectEffect = new pixiJs.Container();
     this.collectEffect.visible = false;
 
     // Круги расширения
     for (let i = 0; i < 3; i++) {
-      const circle = new Graphics();
+      const circle = new pixiJs.Graphics();
       circle.circle(0, 0, 10);
       circle.stroke({ width: 2, color: 0xffffff, alpha: 0.8 });
       circle.label = `collectCircle_${i}`;
@@ -312,13 +317,13 @@ export class Gear extends Container {
     }
 
     // Текст с очками
-    this.pointsText = new Text({
-      text: '',
+    this.pointsText = new pixiJs.Text({
+      text: "",
       style: {
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xffff00,
-        fontWeight: 'bold',
+        fontWeight: "bold",
       },
     });
     this.pointsText.anchor.set(0.5);
@@ -331,12 +336,12 @@ export class Gear extends Container {
    * Обновление шестерёнки
    */
   public update(delta: number): void {
-    if (this.state === 'collected') {
+    if (this.state === "collected") {
       this.updateCollectAnimation(delta);
       return;
     }
 
-    if (this.state === 'respawning') {
+    if (this.state === "respawning") {
       this.updateRespawn(delta);
       return;
     }
@@ -364,10 +369,12 @@ export class Gear extends Container {
     // Пульсация свечения
     const glowPulse = 1 + Math.sin(this.animationPhase * 2) * 0.1;
     this.glowEffect.scale.set(glowPulse);
-    this.glowEffect.alpha = (0.5 + Math.sin(this.animationPhase * 2) * 0.3) * this.config.glowIntensity;
+    this.glowEffect.alpha =
+      (0.5 + Math.sin(this.animationPhase * 2) * 0.3) *
+      this.config.glowIntensity;
 
     // Для светящихся - дополнительная пульсация
-    if (this.gearType === 'glowing') {
+    if (this.gearType === "glowing") {
       const extraGlow = 1 + Math.sin(this.animationPhase * 3) * 0.2;
       this.gearGraphic.scale.set(extraGlow);
     }
@@ -403,8 +410,11 @@ export class Gear extends Container {
    */
   private updateCollectAnimation(delta: number): void {
     // Расширяющиеся круги
-    this.collectEffect.children.forEach(child => {
-      if (child instanceof Graphics && child.label?.startsWith('collectCircle')) {
+    this.collectEffect.children.forEach((child) => {
+      if (
+        child instanceof pixiJs.Graphics &&
+        child.label?.startsWith("collectCircle")
+      ) {
         child.scale.set(child.scale.x + delta * 0.01);
         child.alpha -= delta * 0.005;
       }
@@ -417,7 +427,7 @@ export class Gear extends Container {
     // Завершение анимации
     if (this.pointsText.alpha <= 0) {
       this.collectEffect.visible = false;
-      this.state = 'idle';
+      this.state = "idle";
 
       // Респавн если нужно
       if (this.config.respawnTime > 0) {
@@ -444,7 +454,7 @@ export class Gear extends Container {
     if (this.collected) return;
 
     this.collected = true;
-    this.state = 'collected';
+    this.state = "collected";
 
     // Запускаем эффект сбора
     this.startCollectEffect();
@@ -453,11 +463,11 @@ export class Gear extends Container {
     this.gearGraphic.visible = false;
     this.centerCircle.visible = false;
     this.glowEffect.visible = false;
-    this.sparkles.forEach(s => s.visible = false);
+    this.sparkles.forEach((s) => (s.visible = false));
 
     // Отправляем событие
     this.eventBus.emit(GameEvent.ITEM_COLLECT, {
-      type: 'gear',
+      type: "gear",
       alias: this.gearType,
       total: this.config.points,
     });
@@ -470,8 +480,11 @@ export class Gear extends Container {
     this.collectEffect.visible = true;
 
     // Сбрасываем круги
-    this.collectEffect.children.forEach(child => {
-      if (child instanceof Graphics && child.label?.startsWith('collectCircle')) {
+    this.collectEffect.children.forEach((child) => {
+      if (
+        child instanceof pixiJs.Graphics &&
+        child.label?.startsWith("collectCircle")
+      ) {
         child.scale.set(1);
         child.alpha = 0.8;
       }
@@ -497,7 +510,7 @@ export class Gear extends Container {
    * Начало респавна
    */
   private startRespawn(): void {
-    this.state = 'respawning';
+    this.state = "respawning";
     this.respawnTimer = this.config.respawnTime;
     this.alpha = 0.3;
     this.scale.set(this.currentScale * 0.5);
@@ -508,7 +521,7 @@ export class Gear extends Container {
    */
   private respawn(): void {
     this.collected = false;
-    this.state = 'idle';
+    this.state = "idle";
 
     // Восстанавливаем видимость
     this.gearGraphic.visible = true;
@@ -533,7 +546,7 @@ export class Gear extends Container {
   /**
    * Проверка столкновения с объектом
    */
-  public isCollidingWith(other: Container): boolean {
+  public isCollidingWith(other: pixiJs.Container): boolean {
     if (this.collected) return false;
 
     const bounds = this.getBounds();
@@ -542,10 +555,12 @@ export class Gear extends Container {
     // Небольшое уменьшение хитбокса для удобства сбора
     const margin = 5;
 
-    return bounds.x + margin < otherBounds.x + otherBounds.width &&
-           bounds.x + bounds.width - margin > otherBounds.x &&
-           bounds.y + margin < otherBounds.y + otherBounds.height &&
-           bounds.y + bounds.height - margin > otherBounds.y;
+    return (
+      bounds.x + margin < otherBounds.x + otherBounds.width &&
+      bounds.x + bounds.width - margin > otherBounds.x &&
+      bounds.y + margin < otherBounds.y + otherBounds.height &&
+      bounds.y + bounds.height - margin > otherBounds.y
+    );
   }
 
   /**
@@ -560,7 +575,7 @@ export class Gear extends Container {
    */
   public reset(): void {
     this.collected = false;
-    this.state = 'idle';
+    this.state = "idle";
     this.rotation = 0;
     this.animationPhase = Math.random() * Math.PI * 2;
     this.alpha = 1;
@@ -600,7 +615,7 @@ export class Gear extends Container {
    * Уничтожение шестерёнки
    */
   public destroy(options?: any): void {
-    this.sparkles.forEach(s => s.destroy());
+    this.sparkles.forEach((s) => s.destroy());
     this.sparkles.length = 0;
 
     super.destroy(options);

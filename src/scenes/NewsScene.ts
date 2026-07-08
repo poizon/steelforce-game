@@ -1,11 +1,11 @@
-import { Container, Sprite, Text, TextStyle, Graphics } from 'pixi.js';
-import { BaseScene } from './BaseScene';
-import { GameEvent } from '../core/EventBus';
-import type { SceneName } from '../core/SceneManager';
+import { Container, Sprite, Text, TextStyle, Graphics } from "pixi.js";
+import { BaseScene } from "./BaseScene";
+import { GameEvent } from "../core/EventBus";
+import type { SceneName } from "../core/SceneManager";
 
 interface NewsArticle {
   text: string;
-  delay?: number;  // Задержка перед показом
+  delay?: number; // Задержка перед показом
   duration?: number; // Длительность показа
   style?: Partial<TextStyle>;
 }
@@ -32,7 +32,7 @@ export class NewsScene extends BaseScene {
   private isTransitioning: boolean = false;
   private textAnimationTimer: number = 0;
   private charactersToShow: number = 0;
-  private displayedText: string = '';
+  private displayedText: string = "";
 
   // Конфигурация
   private readonly typingSpeed: number = 30; // мс на символ
@@ -48,12 +48,12 @@ export class NewsScene extends BaseScene {
       style: {
         fontSize: 24,
         fill: 0xff6600,
-        fontWeight: 'bold',
+        fontWeight: "bold",
       },
       duration: 3000,
     },
     {
-      text: '...число рабочих в филиалах завода превысило отметку в 10 тысяч человек..',
+      text: "...число рабочих в филиалах завода превысило отметку в 10 тысяч человек..",
       style: {
         fontSize: 22,
         fill: 0xcccccc,
@@ -61,12 +61,12 @@ export class NewsScene extends BaseScene {
       duration: 2500,
     },
     {
-      text: '......',
+      text: "......",
       delay: 1000,
       duration: 1000,
     },
     {
-      text: '16 НОЯБРЯ 2077 ГОДА НА ЗАВОДЕ ЗАПЛАНИРОВАН ЭКСПЕРИМЕНТ, В ХОДЕ КОТОРОГО БУДЕТ ПРОВЕРЕНА НОВАЯ СЫВОРОТКА, УСКОРЯЮЩАЯ ПРОЦЕСС ОБРАБОТКИ МЕТАЛЛА И ПРОДЛЕВАЮЩАЯ ЖИЗНЬ ИЗГОТОВЛЕНИЯМ ИЗ НЕГО.',
+      text: "16 НОЯБРЯ 2077 ГОДА НА ЗАВОДЕ ЗАПЛАНИРОВАН ЭКСПЕРИМЕНТ, В ХОДЕ КОТОРОГО БУДЕТ ПРОВЕРЕНА НОВАЯ СЫВОРОТКА, УСКОРЯЮЩАЯ ПРОЦЕСС ОБРАБОТКИ МЕТАЛЛА И ПРОДЛЕВАЮЩАЯ ЖИЗНЬ ИЗГОТОВЛЕНИЯМ ИЗ НЕГО.",
       style: {
         fontSize: 20,
         fill: 0xffffff,
@@ -79,20 +79,20 @@ export class NewsScene extends BaseScene {
       style: {
         fontSize: 22,
         fill: 0xff6600,
-        fontStyle: 'italic',
-        fontWeight: 'bold',
+        fontStyle: "italic",
+        fontWeight: "bold",
       },
       duration: 4000,
     },
     {
-      text: '......',
+      text: "......",
       delay: 2000,
       duration: 2000,
     },
   ];
 
   protected getSceneName(): SceneName {
-    return 'news';
+    return "news";
   }
 
   protected async preload(): Promise<void> {
@@ -115,20 +115,20 @@ export class NewsScene extends BaseScene {
 
   protected bindEvents(): void {
     // Пропуск текста по клику или пробелу
-    this.eventMode = 'static';
-    this.on('pointerdown', this.onSkipOrNext.bind(this));
+    this.eventMode = "static";
+    this.on("pointerdown", this.onSkipOrNext.bind(this));
 
-    this.inputManager.onKeyDown(' ', (event) => {
+    this.inputManager.onKeyDown(" ", (event) => {
       event?.preventDefault();
       this.onSkipOrNext();
     });
 
-    this.inputManager.onKeyDown('Enter', (event) => {
+    this.inputManager.onKeyDown("Enter", (event) => {
       event?.preventDefault();
       this.onSkipOrNext();
     });
 
-    this.inputManager.onKeyDown('Escape', this.onEscape.bind(this));
+    this.inputManager.onKeyDown("Escape", this.onEscape.bind(this));
 
     // Обработка окончания диалога
     this.eventBus.on(GameEvent.DIALOG_END, this.onNewsComplete.bind(this));
@@ -136,10 +136,10 @@ export class NewsScene extends BaseScene {
 
   protected async onEnter(): Promise<void> {
     // Останавливаем музыку меню
-    this.audioManager.stopCategory('music', 1000);
+    this.audioManager.stopCategory("music", 1000);
 
     // Запускаем эмбиент
-    this.audioManager.playAmbient('factory-ambient', {
+    this.audioManager.playAmbient("factory-ambient", {
       volume: 0.2,
       fadeIn: 2000,
     });
@@ -157,7 +157,9 @@ export class NewsScene extends BaseScene {
     if (this.isTyping) {
       this.textAnimationTimer += delta;
 
-      const charsToShow = Math.floor(this.textAnimationTimer / (this.typingSpeed / 16.67));
+      const charsToShow = Math.floor(
+        this.textAnimationTimer / (this.typingSpeed / 16.67),
+      );
 
       if (charsToShow > this.charactersToShow) {
         const article = this.newsArticles[this.currentArticleIndex];
@@ -165,9 +167,11 @@ export class NewsScene extends BaseScene {
           const fullText = article.text;
           this.charactersToShow = Math.min(
             this.charactersToShow + 1,
-            fullText.length
+            fullText.length,
           );
-          this.updateDisplayedText(fullText.substring(0, this.charactersToShow));
+          this.updateDisplayedText(
+            fullText.substring(0, this.charactersToShow),
+          );
 
           if (this.charactersToShow >= fullText.length) {
             this.isTyping = false;
@@ -186,7 +190,7 @@ export class NewsScene extends BaseScene {
    */
   private createBackground(): void {
     this.background = new Sprite(
-      this.assetLoader.getTexture('news-background')
+      this.assetLoader.getTexture("news-background"),
     );
 
     this.background.width = this.app.screen.width;
@@ -211,9 +215,9 @@ export class NewsScene extends BaseScene {
 
     // Заголовок газеты
     const newspaperTitle = new Text({
-      text: 'STEELFORCE TIMES',
+      text: "STEELFORCE TIMES",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 16,
         fill: 0x888888,
         letterSpacing: 4,
@@ -226,9 +230,9 @@ export class NewsScene extends BaseScene {
 
     // Подзаголовок
     const editionText = new Text({
-      text: 'СПЕЦИАЛЬНЫЙ ВЫПУСК • 15 НОЯБРЯ 2077',
+      text: "СПЕЦИАЛЬНЫЙ ВЫПУСК • 15 НОЯБРЯ 2077",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x666666,
         letterSpacing: 2,
@@ -251,16 +255,16 @@ export class NewsScene extends BaseScene {
    */
   private createHeader(): void {
     this.headerText = new Text({
-      text: 'ПРОРЫВ В МЕТАЛЛУРГИИ',
+      text: "ПРОРЫВ В МЕТАЛЛУРГИИ",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 28,
         fill: 0xff4444,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         letterSpacing: 3,
         wordWrap: true,
         wordWrapWidth: 900,
-        align: 'center',
+        align: "center",
       }),
     });
 
@@ -276,9 +280,9 @@ export class NewsScene extends BaseScene {
    */
   private createDate(): void {
     this.dateText = new Text({
-      text: '15.11.2077',
+      text: "15.11.2077",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0x888888,
         letterSpacing: 2,
@@ -404,16 +408,16 @@ export class NewsScene extends BaseScene {
     this.newspaperContainer.alpha = startAlpha;
 
     // Звук разворачивающейся газеты
-    this.audioManager.playSFX('newspaper-rustle', { volume: 0.3 });
+    this.audioManager.playSFX("newspaper-rustle", { volume: 0.3 });
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 4);
 
         this.newspaperContainer.scale.set(
-          startScale + (1 - startScale) * eased
+          startScale + (1 - startScale) * eased,
         );
         this.newspaperContainer.alpha = startAlpha + (1 - startAlpha) * eased;
 
@@ -457,13 +461,13 @@ export class NewsScene extends BaseScene {
    * Показ отдельной статьи
    */
   private async showArticle(article: NewsArticle): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // Очищаем контейнер текста
       this.newsTextContainer.removeChildren();
 
       // Создаём текст
       const textStyle = new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 20,
         fill: 0xffffff,
         wordWrap: true,
@@ -474,7 +478,7 @@ export class NewsScene extends BaseScene {
       });
 
       const textObject = new Text({
-        text: '',
+        text: "",
         style: textStyle,
       });
 
@@ -484,7 +488,7 @@ export class NewsScene extends BaseScene {
       this.isTyping = true;
       this.charactersToShow = 0;
       this.textAnimationTimer = 0;
-      this.displayedText = '';
+      this.displayedText = "";
 
       // Звук печати
       this.startTypingSound();
@@ -532,7 +536,7 @@ export class NewsScene extends BaseScene {
    */
   private startTypingSound(): void {
     // Можно использовать звук печатной машинки
-    this.audioManager.playAmbient('typing-sound', {
+    this.audioManager.playAmbient("typing-sound", {
       volume: 0.1,
       fadeIn: 100,
     });
@@ -542,7 +546,7 @@ export class NewsScene extends BaseScene {
    * Остановка звука печати
    */
   private stopTypingSound(): void {
-    this.audioManager.stopCategory('ambient', 200);
+    this.audioManager.stopCategory("ambient", 200);
   }
 
   /**
@@ -560,10 +564,10 @@ export class NewsScene extends BaseScene {
         this.onArticleComplete();
       }
       this.stopTypingSound();
-      this.audioManager.playSFX('click-sound', { volume: 0.3 });
+      this.audioManager.playSFX("click-sound", { volume: 0.3 });
     } else {
       // Переходим к следующей статье (если есть)
-      this.audioManager.playSFX('click-sound', { volume: 0.3 });
+      this.audioManager.playSFX("click-sound", { volume: 0.3 });
       // Автоматически перейдёт в startNewsSequence
     }
   }
@@ -583,14 +587,18 @@ export class NewsScene extends BaseScene {
 
     // Переход к следующей сцене
     this.eventBus.emit(GameEvent.SCENE_CHANGE, {
-      from: 'news',
-      to: 'rooftop',
+      from: "news",
+      to: "rooftop",
     });
 
-    this.sceneManager.switchTo('rooftop', {}, {
-      type: 'fade',
-      duration: 1000,
-    });
+    this.sceneManager.switchTo(
+      "rooftop",
+      {},
+      {
+        type: "fade",
+        duration: 1000,
+      },
+    );
   }
 
   /**
@@ -616,7 +624,7 @@ export class NewsScene extends BaseScene {
    * Эффект глитча
    */
   private async triggerGlitchEffect(): Promise<void> {
-    this.audioManager.playSFX('glitch-sound', { volume: 0.5 });
+    this.audioManager.playSFX("glitch-sound", { volume: 0.5 });
 
     // Создаём несколько случайных полос
     for (let i = 0; i < 5; i++) {
@@ -671,7 +679,10 @@ export class NewsScene extends BaseScene {
         const size = Math.random() * 3;
 
         this.noiseOverlay.rect(x, y, size, size);
-        this.noiseOverlay.fill({ color: 0xffffff, alpha: Math.random() * 0.05 });
+        this.noiseOverlay.fill({
+          color: 0xffffff,
+          alpha: Math.random() * 0.05,
+        });
       }
     }
 
@@ -686,7 +697,7 @@ export class NewsScene extends BaseScene {
    */
   public async cleanup(): Promise<void> {
     this.stopTypingSound();
-    this.audioManager.stopCategory('ambient', 500);
+    this.audioManager.stopCategory("ambient", 500);
 
     await super.cleanup();
   }

@@ -1,5 +1,5 @@
-import { EventBus } from './EventBus';
-import { AssetLoader } from './AssetLoader';
+import * as EventBus from "./EventBus";
+import { AssetLoader } from "./AssetLoader";
 
 export interface AudioConfig {
   volume: number;
@@ -11,7 +11,7 @@ export interface AudioConfig {
   priority?: number;
 }
 
-export type AudioCategory = 'music' | 'sfx' | 'ambient' | 'voice' | 'ui';
+export type AudioCategory = "music" | "sfx" | "ambient" | "voice" | "ui";
 
 export interface AudioState {
   alias: string;
@@ -30,8 +30,7 @@ interface AudioChannel {
 }
 
 export class AudioManager {
-  private readonly eventBus: EventBus;
-  private readonly assetLoader: AssetLoader;
+  private readonly eventBus: EventBus.EventBus;
 
   private readonly channels: Map<AudioCategory, AudioChannel>;
   private readonly activeSounds: Map<string, AudioState>;
@@ -54,7 +53,12 @@ export class AudioManager {
     resolve: (state: AudioState | null) => void;
   }> = [];
 
-  private readonly defaultCategoryConfig: Record<AudioCategory, Omit<AudioChannel, 'activeSounds'>> = {
+  private assetLoader?: AssetLoader;
+
+  private readonly defaultCategoryConfig: Record<
+    AudioCategory,
+    Omit<AudioChannel, "activeSounds">
+  > = {
     music: { volume: 0.7, isMuted: false, maxSimultaneous: 2 },
     sfx: { volume: 1.0, isMuted: false, maxSimultaneous: 8 },
     ambient: { volume: 0.5, isMuted: false, maxSimultaneous: 3 },
@@ -62,7 +66,7 @@ export class AudioManager {
     ui: { volume: 0.8, isMuted: false, maxSimultaneous: 4 },
   };
 
-  constructor(eventBus: EventBus, assetLoader: AssetLoader) {
+  constructor(eventBus: EventBus.EventBus, assetLoader?: AssetLoader) {
     this.eventBus = eventBus;
     this.assetLoader = assetLoader;
     this.channels = new Map();
@@ -73,7 +77,9 @@ export class AudioManager {
   }
 
   private initChannels(): void {
-    for (const [category, config] of Object.entries(this.defaultCategoryConfig)) {
+    for (const [category, config] of Object.entries(
+      this.defaultCategoryConfig,
+    )) {
       this.channels.set(category as AudioCategory, {
         ...config,
         activeSounds: new Map(),
@@ -83,7 +89,7 @@ export class AudioManager {
 
   private setupEventListeners(): void {
     // Автоматическая пауза при сворачивании окна
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         this.pauseAll();
       } else {
@@ -97,10 +103,17 @@ export class AudioManager {
     };
 
     // Слушаем разные типы взаимодействий
-    document.addEventListener('click', initOnInteraction, { once: true });
-    document.addEventListener('keydown', initOnInteraction, { once: true });
-    document.addEventListener('touchstart', initOnInteraction, { once: true });
-    document.addEventListener('mousedown', initOnInteraction, { once: true });
+    document.addEventListener("click", initOnInteraction, { once: true });
+    document.addEventListener("keydown", initOnInteraction, { once: true });
+    document.addEventListener("touchstart", initOnInteraction, { once: true });
+    document.addEventListener("mousedown", initOnInteraction, { once: true });
+  }
+
+  /**
+   * Устанавливает assetLoader (если не был передан в конструктор)
+   */
+  public setAssetLoader(assetLoader: AssetLoader): void {
+    this.assetLoader = assetLoader;
   }
 
   /**
@@ -110,36 +123,38 @@ export class AudioManager {
     if (this.isAudioContextInitialized) return;
 
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
 
       if (!AudioContextClass) {
-        console.warn('AudioContext not supported in this browser');
+        console.warn("AudioContext not supported in this browser");
         return;
       }
 
       this.audioContext = new AudioContextClass();
 
       // Если контекст в состоянии suspended, пробуем возобновить
-      if (this.audioContext.state === 'suspended') {
+      if (this.audioContext.state === "suspended") {
         try {
           await this.audioContext.resume();
         } catch (error) {
-          console.warn('Could not resume AudioContext:', error);
+          console.warn("Could not resume AudioContext:", error);
           // Не устанавливаем флаг инициализации, чтобы попробовать позже
           return;
         }
       }
 
       this.isAudioContextInitialized = true;
-      console.log('AudioContext initialized successfully');
+      console.log("AudioContext initialized successfully");
 
-      this.eventBus.emit('audio:context:initialized', {});
+      this.eventBus.emit("audio:context:initialized", {});
 
       // Воспроизводим все ожидающие звуки
       await this.processPendingPlays();
-
     } catch (error) {
-      console.error('Failed to initialize AudioContext:', error);
+      console.error("Failed to initialize AudioContext:", error);
     }
   }
 
@@ -166,17 +181,17 @@ export class AudioManager {
    */
   public async play(
     alias: string,
-    config: Partial<AudioConfig> = {}
+    config: Partial<AudioConfig> = {},
   ): Promise<AudioState | null> {
     // Если AudioContext ещё не инициализирован, добавляем в очередь
     if (!this.isAudioContextInitialized) {
       console.log(`AudioContext not ready, queuing sound: "${alias}"`);
 
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         this.pendingPlays.push({
           alias,
           config: this.mergeConfig(config),
-          resolve
+          resolve,
         });
       });
     }
@@ -184,22 +199,69 @@ export class AudioManager {
     // Проверяем, не заблокирован ли звук глобально
     if (this.isGlobalMuted) return null;
 
+    // Проверяем, что assetLoader загружен
+    if (!this.assetLoader) {
+      console.warn("AssetLoader not initialized, queuing sound: " + alias);
+      return new Promise((resolve) => {
+        this.pendingPlays.push({
+          alias,
+          config: this.mergeConfig(config),
+          resolve,
+        });
+      });
+    }
+
     try {
       // Получаем аудио из AssetLoader
-      const audioElement = this.assetLoader.get<HTMLAudioElement>(alias);
+      const soundAsset = this.assetLoader.get(alias);
 
-      if (!audioElement) {
+      if (!soundAsset) {
         console.warn(`Sound "${alias}" not found in assets`);
         return null;
       }
 
-      if (!(audioElement instanceof HTMLAudioElement)) {
-        console.warn(`Asset "${alias}" is not an HTMLAudioElement`);
+      // Проверяем, является ли это HTMLAudioElement
+      let audioElement: HTMLAudioElement | undefined = undefined;
+
+      if (soundAsset instanceof HTMLAudioElement) {
+        audioElement = soundAsset;
+      } else if (
+        typeof soundAsset === "object" &&
+        soundAsset !== null &&
+        "htmlElement" in soundAsset
+      ) {
+        const htmlElement = (soundAsset as { htmlElement?: HTMLAudioElement })
+          .htmlElement;
+        if (htmlElement instanceof HTMLAudioElement) {
+          audioElement = htmlElement;
+        }
+      } else if (
+        typeof soundAsset === "object" &&
+        soundAsset !== null &&
+        "play" in soundAsset
+      ) {
+        // Это Sound объект PixiJS, пытаемся получить htmlElement
+        try {
+          // В PixiJS v8 Sound имеет htmlElement как getter
+          const htmlElement = (soundAsset as { htmlElement?: HTMLAudioElement })
+            .htmlElement;
+          if (htmlElement instanceof HTMLAudioElement) {
+            audioElement = htmlElement;
+          }
+        } catch {
+          // Игнорируем ошибки
+        }
+      }
+
+      if (!audioElement) {
+        console.warn(
+          `Sound "${alias}" is not a valid HTMLAudioElement or Sound with htmlElement`,
+        );
         return null;
       }
 
       const mergedConfig = this.mergeConfig(config);
-      const category = mergedConfig.category || 'sfx';
+      const category = mergedConfig.category || "sfx";
       const channel = this.channels.get(category);
 
       if (!channel) {
@@ -218,7 +280,11 @@ export class AudioManager {
         }
       }
 
-      const state = await this.createAudioState(audioElement, alias, mergedConfig);
+      const state = await this.createAudioState(
+        audioElement,
+        alias,
+        mergedConfig,
+      );
       await this.startPlayback(state);
 
       return state;
@@ -234,7 +300,7 @@ export class AudioManager {
   private async createAudioState(
     instance: HTMLAudioElement,
     alias: string,
-    config: AudioConfig
+    config: AudioConfig,
   ): Promise<AudioState> {
     const id = `sound_${++this.soundIdCounter}_${alias}`;
 
@@ -253,7 +319,7 @@ export class AudioManager {
     soundInstance.volume = config.fadeIn ? 0 : this.calculateVolume(config);
     soundInstance.loop = config.loop;
     soundInstance.playbackRate = config.playbackRate;
-    soundInstance.preload = 'auto';
+    soundInstance.preload = "auto";
 
     this.setupSoundHandlers(state);
 
@@ -265,7 +331,7 @@ export class AudioManager {
    */
   private async startPlayback(state: AudioState): Promise<void> {
     const { instance, config, alias } = state;
-    const category = config.category || 'sfx';
+    const category = config.category || "sfx";
     const channel = this.channels.get(category)!;
 
     try {
@@ -298,7 +364,7 @@ export class AudioManager {
         this.fadeInSound(state, config.fadeIn);
       }
 
-      this.eventBus.emit('audio:play:started', {
+      this.eventBus.emit("audio:play:started", {
         alias,
         id: state.id,
         category,
@@ -352,7 +418,7 @@ export class AudioManager {
 
       this.removeFromActive(state);
 
-      this.eventBus.emit('audio:play:stopped', { alias, id });
+      this.eventBus.emit("audio:play:stopped", { alias, id });
       this.processQueue();
     } catch (error) {
       console.error(`Failed to stop sound "${alias}":`, error);
@@ -370,7 +436,7 @@ export class AudioManager {
     state.isPaused = true;
     state.isPlaying = false;
 
-    this.eventBus.emit('audio:play:paused', { id, alias: state.alias });
+    this.eventBus.emit("audio:play:paused", { id, alias: state.alias });
   }
 
   /**
@@ -384,7 +450,7 @@ export class AudioManager {
       await state.instance.play();
       state.isPaused = false;
       state.isPlaying = true;
-      this.eventBus.emit('audio:play:resumed', { id, alias: state.alias });
+      this.eventBus.emit("audio:play:resumed", { id, alias: state.alias });
     } catch (error) {
       console.error(`Failed to resume sound "${state.alias}":`, error);
     }
@@ -393,12 +459,15 @@ export class AudioManager {
   /**
    * Воспроизводит фоновую музыку
    */
-  public async playMusic(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playMusic(
+    alias: string,
+    config: Partial<AudioConfig> = {},
+  ): Promise<AudioState | null> {
     // Останавливаем текущую музыку перед запуском новой
-    this.stopCategory('music', 500);
+    this.stopCategory("music", 500);
 
     return this.play(alias, {
-      category: 'music',
+      category: "music",
       loop: true,
       volume: 0.7,
       fadeIn: 1000,
@@ -410,9 +479,12 @@ export class AudioManager {
   /**
    * Воспроизводит звуковой эффект
    */
-  public async playSFX(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playSFX(
+    alias: string,
+    config: Partial<AudioConfig> = {},
+  ): Promise<AudioState | null> {
     return this.play(alias, {
-      category: 'sfx',
+      category: "sfx",
       loop: false,
       volume: 1.0,
       ...config,
@@ -422,9 +494,12 @@ export class AudioManager {
   /**
    * Воспроизводит звук окружения
    */
-  public async playAmbient(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playAmbient(
+    alias: string,
+    config: Partial<AudioConfig> = {},
+  ): Promise<AudioState | null> {
     return this.play(alias, {
-      category: 'ambient',
+      category: "ambient",
       loop: true,
       volume: 0.5,
       fadeIn: 2000,
@@ -435,9 +510,12 @@ export class AudioManager {
   /**
    * Воспроизводит озвучку/диалог
    */
-  public async playVoice(alias: string, config: Partial<AudioConfig> = {}): Promise<AudioState | null> {
+  public async playVoice(
+    alias: string,
+    config: Partial<AudioConfig> = {},
+  ): Promise<AudioState | null> {
     return this.play(alias, {
-      category: 'voice',
+      category: "voice",
       loop: false,
       volume: 1.0,
       priority: 90,
@@ -452,7 +530,7 @@ export class AudioManager {
     for (const state of this.activeSounds.values()) {
       this.pause(state.id);
     }
-    this.eventBus.emit('audio:all:paused', {});
+    this.eventBus.emit("audio:all:paused", {});
   }
 
   /**
@@ -468,7 +546,7 @@ export class AudioManager {
     }
 
     await Promise.allSettled(promises);
-    this.eventBus.emit('audio:all:resumed', {});
+    this.eventBus.emit("audio:all:resumed", {});
   }
 
   /**
@@ -478,9 +556,9 @@ export class AudioManager {
     const states = Array.from(this.activeSounds.values());
 
     if (fadeOut && fadeOut > 0) {
-      states.forEach(state => this.stop(state.id, fadeOut));
+      states.forEach((state) => this.stop(state.id, fadeOut));
     } else {
-      states.forEach(state => this.forceStop(state));
+      states.forEach((state) => this.forceStop(state));
     }
   }
 
@@ -494,9 +572,9 @@ export class AudioManager {
     const states = Array.from(channel.activeSounds.values());
 
     if (fadeOut && fadeOut > 0) {
-      states.forEach(state => this.stop(state.id, fadeOut));
+      states.forEach((state) => this.stop(state.id, fadeOut));
     } else {
-      states.forEach(state => this.forceStop(state));
+      states.forEach((state) => this.forceStop(state));
     }
   }
 
@@ -510,7 +588,7 @@ export class AudioManager {
       state.instance.volume = 0;
     }
 
-    this.eventBus.emit('audio:muted', {});
+    this.eventBus.emit("audio:muted", {});
   }
 
   /**
@@ -523,7 +601,7 @@ export class AudioManager {
       state.instance.volume = this.calculateVolume(state.config);
     }
 
-    this.eventBus.emit('audio:unmuted', {});
+    this.eventBus.emit("audio:unmuted", {});
   }
 
   /**
@@ -536,7 +614,7 @@ export class AudioManager {
     channel.isMuted = true;
 
     const states = Array.from(channel.activeSounds.values());
-    states.forEach(state => this.forceStop(state));
+    states.forEach((state) => this.forceStop(state));
   }
 
   /**
@@ -559,7 +637,7 @@ export class AudioManager {
       state.instance.volume = this.calculateVolume(state.config);
     }
 
-    this.eventBus.emit('audio:volume:changed', { volume: this.masterVolume });
+    this.eventBus.emit("audio:volume:changed", { volume: this.masterVolume });
   }
 
   /**
@@ -582,7 +660,7 @@ export class AudioManager {
   private calculateVolume(config: AudioConfig): number {
     if (this.isGlobalMuted) return 0;
 
-    const category = config.category || 'sfx';
+    const category = config.category || "sfx";
     const channel = this.channels.get(category);
 
     if (!channel || channel.isMuted) return 0;
@@ -600,9 +678,10 @@ export class AudioManager {
     const fade = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      const eased =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
       state.instance.volume = targetVolume * eased;
 
@@ -617,7 +696,11 @@ export class AudioManager {
   /**
    * Плавное уменьшение громкости
    */
-  private fadeOutSound(state: AudioState, duration: number, onComplete: () => void): void {
+  private fadeOutSound(
+    state: AudioState,
+    duration: number,
+    onComplete: () => void,
+  ): void {
     const startVolume = state.instance.volume;
     const startTime = Date.now();
 
@@ -644,9 +727,9 @@ export class AudioManager {
    */
   private addToQueue(
     alias: string,
-    config: AudioConfig
+    config: AudioConfig,
   ): Promise<AudioState | null> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.waitingQueue.push({ alias, config, resolve });
     });
   }
@@ -658,7 +741,7 @@ export class AudioManager {
     if (this.waitingQueue.length === 0) return;
 
     const next = this.waitingQueue.shift()!;
-    this.play(next.alias, next.config).then(state => {
+    this.play(next.alias, next.config).then((state) => {
       next.resolve(state);
     });
   }
@@ -690,7 +773,7 @@ export class AudioManager {
    * Удаляет звук из активных
    */
   private removeFromActive(state: AudioState): void {
-    const category = state.config.category || 'sfx';
+    const category = state.config.category || "sfx";
     const channel = this.channels.get(category);
 
     state.isPlaying = false;
@@ -710,12 +793,12 @@ export class AudioManager {
     state.instance.onended = () => {
       if (state.config.loop) {
         state.instance.currentTime = 0;
-        state.instance.play().catch(error => {
+        state.instance.play().catch((error) => {
           console.error(`Failed to loop sound "${state.alias}":`, error);
         });
       } else {
         this.removeFromActive(state);
-        this.eventBus.emit('audio:play:completed', {
+        this.eventBus.emit("audio:play:completed", {
           alias: state.alias,
           id: state.id,
         });
@@ -740,7 +823,7 @@ export class AudioManager {
       playbackRate: config.playbackRate ?? 1.0,
       fadeIn: config.fadeIn,
       fadeOut: config.fadeOut,
-      category: config.category || 'sfx',
+      category: config.category || "sfx",
       priority: config.priority || 0,
     };
   }
@@ -768,8 +851,9 @@ export class AudioManager {
    * Проверяет, воспроизводится ли звук
    */
   public isPlaying(aliasOrId: string): boolean {
-    const state = this.activeSounds.get(aliasOrId) ||
-      Array.from(this.activeSounds.values()).find(s => s.alias === aliasOrId);
+    const state =
+      this.activeSounds.get(aliasOrId) ||
+      Array.from(this.activeSounds.values()).find((s) => s.alias === aliasOrId);
 
     return state?.isPlaying ?? false;
   }
@@ -801,18 +885,18 @@ export class AudioManager {
    * Для отладки
    */
   public debug(): void {
-    console.group('AudioManager Debug');
-    console.log('Master volume:', this.masterVolume);
-    console.log('Global muted:', this.isGlobalMuted);
-    console.log('AudioContext ready:', this.isAudioContextInitialized);
-    console.log('Active sounds:', this.activeSounds.size);
-    console.log('Pending plays:', this.pendingPlays.length);
-    console.log('Queue size:', this.waitingQueue.length);
+    console.group("AudioManager Debug");
+    console.log("Master volume:", this.masterVolume);
+    console.log("Global muted:", this.isGlobalMuted);
+    console.log("AudioContext ready:", this.isAudioContextInitialized);
+    console.log("Active sounds:", this.activeSounds.size);
+    console.log("Pending plays:", this.pendingPlays.length);
+    console.log("Queue size:", this.waitingQueue.length);
 
-    console.group('Active sounds:');
+    console.group("Active sounds:");
     for (const [id, state] of this.activeSounds.entries()) {
       console.log(
-        `${id}: alias=${state.alias}, playing=${state.isPlaying}, paused=${state.isPaused}`
+        `${id}: alias=${state.alias}, playing=${state.isPlaying}, paused=${state.isPaused}`,
       );
     }
     console.groupEnd();

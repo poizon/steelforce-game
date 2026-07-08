@@ -1,11 +1,18 @@
-import { Container, Sprite, Graphics, Text, TextStyle, AnimatedSprite } from 'pixi.js';
-import { BaseScene } from './BaseScene';
-import { GameEvent } from '../core/EventBus';
-import { Player } from '../entities/Player';
-import { MutatedWorker } from '../entities/MutatedWorker';
-import { PipePuzzle } from '../components/PuzzleElements/PipePuzzle';
-import type { SceneName } from '../core/SceneManager';
-import type { Vector2 } from '../types';
+import {
+  Container,
+  Sprite,
+  Graphics,
+  Text,
+  TextStyle,
+  AnimatedSprite,
+} from "pixi.js";
+import { BaseScene } from "./BaseScene";
+import { GameEvent } from "../core/EventBus";
+import { Player } from "../entities/Player";
+import { MutatedWorker } from "../entities/MutatedWorker";
+import { PipePuzzle } from "../components/PuzzleElements/PipePuzzle";
+import type { SceneName } from "../core/SceneManager";
+import type { Vector2 } from "../types";
 
 interface GasVent {
   x: number;
@@ -35,7 +42,7 @@ interface PuzzleNode {
   id: string;
   x: number;
   y: number;
-  type: 'start' | 'end' | 'junction' | 'valve';
+  type: "start" | "end" | "junction" | "valve";
   connections: string[];
   isActive: boolean;
 }
@@ -98,7 +105,7 @@ export class ChemicalScene extends BaseScene {
   private exitPoint: Vector2 = { x: 2600, y: 400 };
 
   protected getSceneName(): SceneName {
-    return 'chemical';
+    return "chemical";
   }
 
   protected async preload(): Promise<void> {
@@ -128,40 +135,46 @@ export class ChemicalScene extends BaseScene {
 
   protected bindEvents(): void {
     // Управление игроком
-    this.inputManager.onKeyDown('ArrowLeft', () => this.movePlayer(-1, 0));
-    this.inputManager.onKeyDown('ArrowRight', () => this.movePlayer(1, 0));
-    this.inputManager.onKeyDown('ArrowUp', () => this.movePlayer(0, -1));
-    this.inputManager.onKeyDown('ArrowDown', () => this.movePlayer(0, 1));
-    this.inputManager.onKeyDown(' ', (event) => {
+    this.inputManager.onKeyDown("ArrowLeft", () => this.movePlayer(-1, 0));
+    this.inputManager.onKeyDown("ArrowRight", () => this.movePlayer(1, 0));
+    this.inputManager.onKeyDown("ArrowUp", () => this.movePlayer(0, -1));
+    this.inputManager.onKeyDown("ArrowDown", () => this.movePlayer(0, 1));
+    this.inputManager.onKeyDown(" ", (event) => {
       event?.preventDefault();
       this.playerInteract();
     });
 
     // Открытие миникарты
-    this.inputManager.onKeyDown('Tab', (event) => {
+    this.inputManager.onKeyDown("Tab", (event) => {
       event?.preventDefault();
       this.toggleMinimap();
     });
 
     // Пауза
-    this.inputManager.onKeyDown('Escape', this.onEscape.bind(this));
+    this.inputManager.onKeyDown("Escape", this.onEscape.bind(this));
 
     // События
     this.eventBus.on(GameEvent.PLAYER_DEATH, this.onPlayerDeath.bind(this));
-    this.eventBus.on(GameEvent.PUZZLE_COMPLETE, this.onPuzzleComplete.bind(this));
-    this.eventBus.on(GameEvent.MONSTER_DESTROY, this.onMonsterDestroy.bind(this));
+    this.eventBus.on(
+      GameEvent.PUZZLE_COMPLETE,
+      this.onPuzzleComplete.bind(this),
+    );
+    this.eventBus.on(
+      GameEvent.MONSTER_DESTROY,
+      this.onMonsterDestroy.bind(this),
+    );
   }
 
   protected async onEnter(): Promise<void> {
     // Атмосферная музыка
     this.audioManager.stopAll(500);
-    this.audioManager.playMusic('chemical-music', {
+    this.audioManager.playMusic("chemical-music", {
       volume: 0.3,
       fadeIn: 1000,
     });
 
     // Индустриальные звуки
-    this.audioManager.playAmbient('chemical-factory', {
+    this.audioManager.playAmbient("chemical-factory", {
       volume: 0.3,
       fadeIn: 2000,
     });
@@ -239,7 +252,10 @@ export class ChemicalScene extends BaseScene {
       const x = Math.random() * this.levelWidth;
       const y = Math.random() > 0.5 ? 15 : this.levelHeight - 25;
       stain.rect(x, y, Math.random() * 10 + 3, Math.random() * 20 + 10);
-      stain.fill({ color: Math.random() > 0.5 ? 0x88ff00 : 0x448800, alpha: 0.3 });
+      stain.fill({
+        color: Math.random() > 0.5 ? 0x88ff00 : 0x448800,
+        alpha: 0.3,
+      });
       this.background.addChild(stain);
     }
 
@@ -265,7 +281,7 @@ export class ChemicalScene extends BaseScene {
       { x: 1700, y: 500, w: 1100 },
     ];
 
-    horizontalPipes.forEach(pipe => {
+    horizontalPipes.forEach((pipe) => {
       this.createHorizontalPipe(pipe.x, pipe.y, pipe.w);
     });
 
@@ -281,7 +297,7 @@ export class ChemicalScene extends BaseScene {
       { x: 1600, y: 500, h: 100 },
     ];
 
-    verticalPipes.forEach(pipe => {
+    verticalPipes.forEach((pipe) => {
       this.createVerticalPipe(pipe.x, pipe.y, pipe.h);
     });
 
@@ -364,13 +380,13 @@ export class ChemicalScene extends BaseScene {
       valve.fill({ color: 0x00ff00 });
 
       valve.position.set(pos.x, pos.y);
-      valve.eventMode = 'static';
-      valve.cursor = 'pointer';
+      valve.eventMode = "static";
+      valve.cursor = "pointer";
 
       const valveId = `valve_${index}`;
       this.valvePositions.set(valveId, false);
 
-      valve.on('pointerdown', () => {
+      valve.on("pointerdown", () => {
         this.toggleValve(valveId, valve);
       });
 
@@ -396,7 +412,7 @@ export class ChemicalScene extends BaseScene {
       indicator.fill({ color: currentState ? 0xff0000 : 0x00ff00 });
     }
 
-    this.audioManager.playSFX('valve-turn', { volume: 0.3 });
+    this.audioManager.playSFX("valve-turn", { volume: 0.3 });
 
     // Обновление головоломки
     this.updatePuzzleState(valveId, !currentState);
@@ -416,7 +432,7 @@ export class ChemicalScene extends BaseScene {
       { x: 2200, y: 130, w: 110, h: 140 },
     ];
 
-    tankPositions.forEach(pos => {
+    tankPositions.forEach((pos) => {
       const tank = this.createChemicalTank(pos.x, pos.y, pos.w, pos.h);
       this.chemicalTanks.push(tank);
       this.addChild(tank);
@@ -430,7 +446,7 @@ export class ChemicalScene extends BaseScene {
     x: number,
     y: number,
     width: number,
-    height: number
+    height: number,
   ): Container {
     const tank = new Container();
     tank.position.set(x, y);
@@ -445,7 +461,13 @@ export class ChemicalScene extends BaseScene {
     // Уровень жидкости
     const liquidLevel = 0.3 + Math.random() * 0.5;
     const liquid = new Graphics();
-    liquid.roundRect(5, height * (1 - liquidLevel), width - 10, height * liquidLevel, 5);
+    liquid.roundRect(
+      5,
+      height * (1 - liquidLevel),
+      width - 10,
+      height * liquidLevel,
+      5,
+    );
     liquid.fill({ color: 0x88ff00, alpha: 0.6 });
     tank.addChild(liquid);
 
@@ -464,10 +486,7 @@ export class ChemicalScene extends BaseScene {
     // Стрелка
     const angle = Math.random() * Math.PI;
     gauge.moveTo(width - 15, 15);
-    gauge.lineTo(
-      width - 15 + Math.cos(angle) * 8,
-      15 + Math.sin(angle) * 8
-    );
+    gauge.lineTo(width - 15 + Math.cos(angle) * 8, 15 + Math.sin(angle) * 8);
     gauge.stroke({ width: 1, color: 0xff0000 });
     tank.addChild(gauge);
 
@@ -496,7 +515,7 @@ export class ChemicalScene extends BaseScene {
       { x: 2400, y: 500 },
     ];
 
-    ventPositions.forEach(pos => {
+    ventPositions.forEach((pos) => {
       const vent = this.createGasVent(pos.x, pos.y);
       this.gasVents.push(vent);
       this.addChild(vent.graphics);
@@ -527,7 +546,8 @@ export class ChemicalScene extends BaseScene {
     graphics.position.set(x, y);
 
     return {
-      x, y,
+      x,
+      y,
       width: 40,
       height: 20,
       active: false,
@@ -547,10 +567,7 @@ export class ChemicalScene extends BaseScene {
       const light = new Graphics();
       light.circle(0, 0, 8);
       light.fill({ color: 0xff0000, alpha: 0.3 });
-      light.position.set(
-        100 + i * 350,
-        30
-      );
+      light.position.set(100 + i * 350, 30);
       this.warningLights.push(light);
       this.addChild(light);
     }
@@ -567,7 +584,7 @@ export class ChemicalScene extends BaseScene {
       spill.fill({ color: 0x88ff00, alpha: 0.2 });
       spill.position.set(
         Math.random() * this.levelWidth,
-        40 + Math.random() * (this.levelHeight - 80)
+        40 + Math.random() * (this.levelHeight - 80),
       );
       this.chemicalSpills.push(spill);
       this.addChild(spill);
@@ -602,15 +619,15 @@ export class ChemicalScene extends BaseScene {
     container.addChild(icon);
 
     const text = new Text({
-      text: 'Противогаз: 100%',
+      text: "Противогаз: 100%",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x00ff00,
       }),
     });
     text.position.set(10, 8);
-    text.label = 'maskText';
+    text.label = "maskText";
     container.addChild(text);
 
     return container;
@@ -622,13 +639,62 @@ export class ChemicalScene extends BaseScene {
   private createPuzzleSystem(): void {
     // Создаём узлы схемы
     this.puzzleNodes = [
-      { id: 'start', x: 100, y: 400, type: 'start', connections: ['node1', 'node2'], isActive: true },
-      { id: 'node1', x: 400, y: 300, type: 'junction', connections: ['start', 'node3', 'node4'], isActive: false },
-      { id: 'node2', x: 400, y: 500, type: 'junction', connections: ['start', 'node4', 'node5'], isActive: false },
-      { id: 'node3', x: 700, y: 200, type: 'valve', connections: ['node1', 'end'], isActive: false },
-      { id: 'node4', x: 700, y: 400, type: 'valve', connections: ['node1', 'node2', 'node5'], isActive: false },
-      { id: 'node5', x: 1000, y: 500, type: 'valve', connections: ['node2', 'node4', 'end'], isActive: false },
-      { id: 'end', x: 1300, y: 400, type: 'end', connections: ['node3', 'node5'], isActive: true },
+      {
+        id: "start",
+        x: 100,
+        y: 400,
+        type: "start",
+        connections: ["node1", "node2"],
+        isActive: true,
+      },
+      {
+        id: "node1",
+        x: 400,
+        y: 300,
+        type: "junction",
+        connections: ["start", "node3", "node4"],
+        isActive: false,
+      },
+      {
+        id: "node2",
+        x: 400,
+        y: 500,
+        type: "junction",
+        connections: ["start", "node4", "node5"],
+        isActive: false,
+      },
+      {
+        id: "node3",
+        x: 700,
+        y: 200,
+        type: "valve",
+        connections: ["node1", "end"],
+        isActive: false,
+      },
+      {
+        id: "node4",
+        x: 700,
+        y: 400,
+        type: "valve",
+        connections: ["node1", "node2", "node5"],
+        isActive: false,
+      },
+      {
+        id: "node5",
+        x: 1000,
+        y: 500,
+        type: "valve",
+        connections: ["node2", "node4", "end"],
+        isActive: false,
+      },
+      {
+        id: "end",
+        x: 1300,
+        y: 400,
+        type: "end",
+        connections: ["node3", "node5"],
+        isActive: true,
+      },
     ];
 
     // Создаём головоломку
@@ -679,7 +745,7 @@ export class ChemicalScene extends BaseScene {
 
     cloud.position.set(
       Math.random() * this.levelWidth,
-      Math.random() * this.levelHeight
+      Math.random() * this.levelHeight,
     );
     cloud.alpha = 0;
 
@@ -693,10 +759,7 @@ export class ChemicalScene extends BaseScene {
     const droplet = new Graphics();
     droplet.ellipse(0, 0, 2, 3);
     droplet.fill({ color: 0x88ff00, alpha: 0.8 });
-    droplet.position.set(
-      Math.random() * this.levelWidth,
-      Math.random() * 100
-    );
+    droplet.position.set(Math.random() * this.levelWidth, Math.random() * 100);
     return droplet;
   }
 
@@ -708,9 +771,9 @@ export class ChemicalScene extends BaseScene {
 
     // Цель
     this.objectiveText = new Text({
-      text: 'Настройте систему труб и доберитесь до выхода',
+      text: "Настройте систему труб и доберитесь до выхода",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xff6600,
         wordWrap: true,
@@ -721,9 +784,9 @@ export class ChemicalScene extends BaseScene {
 
     // Подсказка головоломки
     this.puzzleHint = new Text({
-      text: 'Нажмите Tab для просмотра схемы',
+      text: "Нажмите Tab для просмотра схемы",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x888888,
       }),
@@ -737,7 +800,7 @@ export class ChemicalScene extends BaseScene {
     this.hudContainer.addChild(
       this.objectiveText,
       this.puzzleHint,
-      this.dangerIndicator
+      this.dangerIndicator,
     );
     this.addChild(this.hudContainer);
   }
@@ -755,7 +818,7 @@ export class ChemicalScene extends BaseScene {
     container.addChild(bg);
 
     const icon = new Text({
-      text: '⚠',
+      text: "⚠",
       style: new TextStyle({
         fontSize: 20,
         fill: 0xffff00,
@@ -765,15 +828,15 @@ export class ChemicalScene extends BaseScene {
     container.addChild(icon);
 
     const text = new Text({
-      text: 'Токсичность: 0%',
+      text: "Токсичность: 0%",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0xffff00,
       }),
     });
     text.position.set(40, 12);
-    text.label = 'toxicityText';
+    text.label = "toxicityText";
     container.addChild(text);
 
     return container;
@@ -796,9 +859,9 @@ export class ChemicalScene extends BaseScene {
 
     // Заголовок
     const title = new Text({
-      text: 'СХЕМА ТРУБОПРОВОДА',
+      text: "СХЕМА ТРУБОПРОВОДА",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0x00ff00,
       }),
@@ -844,9 +907,8 @@ export class ChemicalScene extends BaseScene {
   private spawnMutant(): void {
     if (this.mutants.length >= this.maxMutants) return;
 
-    const spawnPoint = this.spawnPoints[
-      Math.floor(Math.random() * this.spawnPoints.length)
-    ];
+    const spawnPoint =
+      this.spawnPoints[Math.floor(Math.random() * this.spawnPoints.length)];
 
     const mutant = new MutatedWorker(this.eventBus, this.player);
     mutant.setPosition(spawnPoint.x, spawnPoint.y);
@@ -855,7 +917,7 @@ export class ChemicalScene extends BaseScene {
     this.addChild(mutant);
 
     this.eventBus.emit(GameEvent.MONSTER_SPAWN, {
-      type: 'mutated_worker',
+      type: "mutated_worker",
       id: `mutant_${Date.now()}`,
       position: spawnPoint,
     });
@@ -873,7 +935,10 @@ export class ChemicalScene extends BaseScene {
 
     // Ограничение в пределах уровня
     this.player.x = Math.max(10, Math.min(this.levelWidth - 10, this.player.x));
-    this.player.y = Math.max(30, Math.min(this.levelHeight - 30, this.player.y));
+    this.player.y = Math.max(
+      30,
+      Math.min(this.levelHeight - 30, this.player.y),
+    );
 
     // Проверка безопасных зон
     this.checkSafeZones();
@@ -900,7 +965,7 @@ export class ChemicalScene extends BaseScene {
 
     // Поиск ближайшего вентиля
     for (const [valveId, _] of this.valvePositions) {
-      const valveIndex = parseInt(valveId.split('_')[1]);
+      const valveIndex = parseInt(valveId.split("_")[1]);
       const valvePos = {
         x: [300, 600, 300, 800, 1000, 700][valveIndex],
         y: [100, 100, 300, 300, 100, 500][valveIndex],
@@ -908,7 +973,7 @@ export class ChemicalScene extends BaseScene {
 
       const distance = Math.sqrt(
         Math.pow(playerPos.x - valvePos.x, 2) +
-        Math.pow(playerPos.y - valvePos.y, 2)
+          Math.pow(playerPos.y - valvePos.y, 2),
       );
 
       if (distance < 50) {
@@ -928,7 +993,7 @@ export class ChemicalScene extends BaseScene {
 
     const distance = Math.sqrt(
       Math.pow(playerPos.x - terminalPos.x, 2) +
-      Math.pow(playerPos.y - terminalPos.y, 2)
+        Math.pow(playerPos.y - terminalPos.y, 2),
     );
 
     return distance < 60;
@@ -942,7 +1007,7 @@ export class ChemicalScene extends BaseScene {
     this.pipePuzzle.visible = this.isPuzzleActive;
 
     if (this.isPuzzleActive) {
-      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: 'puzzle' });
+      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: "puzzle" });
     } else {
       this.eventBus.emit(GameEvent.GAME_RESUME, {});
     }
@@ -964,7 +1029,7 @@ export class ChemicalScene extends BaseScene {
    * Обновление мутантов
    */
   private updateMutants(delta: number): void {
-    this.mutants = this.mutants.filter(mutant => {
+    this.mutants = this.mutants.filter((mutant) => {
       if (!mutant.isAlive) {
         this.removeChild(mutant);
         mutant.destroy();
@@ -975,7 +1040,7 @@ export class ChemicalScene extends BaseScene {
 
       // Мутанты получают урон от газа
       if (this.toxicLevel > 50) {
-        mutant.takeDamage(0.5, 'toxic_gas');
+        mutant.takeDamage(0.5, "toxic_gas");
       }
 
       return true;
@@ -1001,7 +1066,7 @@ export class ChemicalScene extends BaseScene {
    * Обновление газовых вентов
    */
   private updateGasVents(delta: number): void {
-    this.gasVents.forEach(vent => {
+    this.gasVents.forEach((vent) => {
       if (!vent.active) return;
 
       vent.timer -= delta;
@@ -1031,7 +1096,7 @@ export class ChemicalScene extends BaseScene {
    * Выброс газового облака
    */
   private emitGasCloud(x: number, y: number): void {
-    const cloud = this.gasClouds.find(c => c.alpha <= 0);
+    const cloud = this.gasClouds.find((c) => c.alpha <= 0);
     if (!cloud) return;
 
     cloud.position.set(x, y);
@@ -1064,7 +1129,7 @@ export class ChemicalScene extends BaseScene {
 
     // Обновляем узлы головоломки
     const nodeIndex = this.puzzleNodes.findIndex(
-      node => node.type === 'valve' && `valve_${node.id}` === valveId
+      (node) => node.type === "valve" && `valve_${node.id}` === valveId,
     );
 
     if (nodeIndex !== -1) {
@@ -1082,12 +1147,12 @@ export class ChemicalScene extends BaseScene {
   private checkPuzzleSolution(): void {
     // Проверяем, можно ли добраться от start до end
     const visited = new Set<string>();
-    const queue = ['start'];
+    const queue = ["start"];
 
     while (queue.length > 0) {
       const current = queue.shift()!;
 
-      if (current === 'end') {
+      if (current === "end") {
         this.completePuzzle();
         return;
       }
@@ -1095,12 +1160,12 @@ export class ChemicalScene extends BaseScene {
       if (visited.has(current)) continue;
       visited.add(current);
 
-      const node = this.puzzleNodes.find(n => n.id === current);
+      const node = this.puzzleNodes.find((n) => n.id === current);
       if (!node) continue;
 
       // Для активных узлов или start/end добавляем соединения
-      if (node.isActive || node.type === 'start' || node.type === 'end') {
-        node.connections.forEach(conn => {
+      if (node.isActive || node.type === "start" || node.type === "end") {
+        node.connections.forEach((conn) => {
           if (!visited.has(conn)) {
             queue.push(conn);
           }
@@ -1118,7 +1183,7 @@ export class ChemicalScene extends BaseScene {
     this.pipePuzzle.visible = false;
 
     // Отключаем все газовые венты
-    this.gasVents.forEach(vent => {
+    this.gasVents.forEach((vent) => {
       vent.active = false;
     });
 
@@ -1126,16 +1191,16 @@ export class ChemicalScene extends BaseScene {
     this.toxicLevel = Math.max(0, this.toxicLevel - 50);
 
     this.eventBus.emit(GameEvent.PUZZLE_COMPLETE, {
-      puzzleId: 'pipe_system',
-      reward: 'gas_disabled',
+      puzzleId: "pipe_system",
+      reward: "gas_disabled",
     });
 
     this.eventBus.emit(GameEvent.GAME_RESUME, {});
 
-    this.audioManager.playSFX('puzzle-complete', { volume: 0.7 });
+    this.audioManager.playSFX("puzzle-complete", { volume: 0.7 });
 
     // Показываем сообщение
-    this.showMessage('Система труб настроена! Газ отключён!', 0x00ff00);
+    this.showMessage("Система труб настроена! Газ отключён!", 0x00ff00);
   }
 
   /**
@@ -1144,12 +1209,12 @@ export class ChemicalScene extends BaseScene {
   private updateEffects(delta: number): void {
     // Токсичный туман
     if (this.toxicLevel > 0) {
-      this.toxicFog.alpha = this.toxicLevel / 100 * 0.3;
+      this.toxicFog.alpha = (this.toxicLevel / 100) * 0.3;
       this.toxicFog.x = Math.sin(Date.now() * 0.0005) * 10;
     }
 
     // Газовые облака
-    this.gasClouds.forEach(cloud => {
+    this.gasClouds.forEach((cloud) => {
       if (cloud.alpha > 0) {
         cloud.alpha -= delta * 0.001;
         cloud.scale.set(cloud.scale.x + delta * 0.002);
@@ -1158,7 +1223,7 @@ export class ChemicalScene extends BaseScene {
     });
 
     // Капли кислоты
-    this.acidDroplets.forEach(droplet => {
+    this.acidDroplets.forEach((droplet) => {
       droplet.y += delta * 1.5;
 
       if (droplet.y > this.levelHeight) {
@@ -1178,7 +1243,7 @@ export class ChemicalScene extends BaseScene {
     });
 
     // Химические разливы
-    this.chemicalSpills.forEach(spill => {
+    this.chemicalSpills.forEach((spill) => {
       spill.alpha = 0.1 + Math.sin(Date.now() * 0.002 + spill.x) * 0.1;
     });
   }
@@ -1190,13 +1255,13 @@ export class ChemicalScene extends BaseScene {
     // Проверяем, находится ли игрок в зоне газа
     let isInGas = false;
 
-    this.gasVents.forEach(vent => {
+    this.gasVents.forEach((vent) => {
       if (!vent.active || vent.graphics.alpha < 0.5) return;
 
       const playerPos = this.player.getPosition();
       const distance = Math.sqrt(
         Math.pow(playerPos.x - vent.x, 2) +
-        Math.pow(playerPos.y - (vent.y + 50), 2)
+          Math.pow(playerPos.y - (vent.y + 50), 2),
       );
 
       if (distance < 80) {
@@ -1205,13 +1270,12 @@ export class ChemicalScene extends BaseScene {
     });
 
     // Проверка газовых облаков
-    this.gasClouds.forEach(cloud => {
+    this.gasClouds.forEach((cloud) => {
       if (cloud.alpha <= 0) return;
 
       const playerPos = this.player.getPosition();
       const distance = Math.sqrt(
-        Math.pow(playerPos.x - cloud.x, 2) +
-        Math.pow(playerPos.y - cloud.y, 2)
+        Math.pow(playerPos.x - cloud.x, 2) + Math.pow(playerPos.y - cloud.y, 2),
       );
 
       if (distance < 60) {
@@ -1227,7 +1291,7 @@ export class ChemicalScene extends BaseScene {
       if (this.gasMaskDurability <= 0) {
         this.isWearingGasMask = false;
         this.gasMaskIndicator.visible = false;
-        this.showMessage('Противогаз сломан!', 0xff0000);
+        this.showMessage("Противогаз сломан!", 0xff0000);
       }
     } else {
       this.toxicLevel = Math.max(0, this.toxicLevel - delta * 0.1);
@@ -1235,9 +1299,9 @@ export class ChemicalScene extends BaseScene {
 
     // Урон от токсичности
     if (this.toxicLevel >= 100) {
-      this.player.takeDamage(5, 'toxic_gas');
+      this.player.takeDamage(5, "toxic_gas");
     } else if (this.toxicLevel >= 50) {
-      this.player.takeDamage(1, 'toxic_gas');
+      this.player.takeDamage(1, "toxic_gas");
     }
   }
 
@@ -1247,10 +1311,9 @@ export class ChemicalScene extends BaseScene {
   private checkSafeZones(): void {
     const playerPos = this.player.getPosition();
 
-    this.safeZones.forEach(zone => {
+    this.safeZones.forEach((zone) => {
       const distance = Math.sqrt(
-        Math.pow(playerPos.x - zone.x, 2) +
-        Math.pow(playerPos.y - zone.y, 2)
+        Math.pow(playerPos.x - zone.x, 2) + Math.pow(playerPos.y - zone.y, 2),
       );
 
       if (distance < 50) {
@@ -1264,31 +1327,30 @@ export class ChemicalScene extends BaseScene {
    */
   private checkCollisions(): void {
     // Столкновения с мутантами
-    this.mutants.forEach(mutant => {
+    this.mutants.forEach((mutant) => {
       if (this.isColliding(this.player, mutant)) {
         if (mutant.canAttack()) {
-          this.player.takeDamage(15, 'mutant');
+          this.player.takeDamage(15, "mutant");
         }
       }
     });
 
     // Столкновения с химическими разливами
-    this.chemicalSpills.forEach(spill => {
+    this.chemicalSpills.forEach((spill) => {
       const playerPos = this.player.getPosition();
       const distance = Math.sqrt(
-        Math.pow(playerPos.x - spill.x, 2) +
-        Math.pow(playerPos.y - spill.y, 2)
+        Math.pow(playerPos.x - spill.x, 2) + Math.pow(playerPos.y - spill.y, 2),
       );
 
       if (distance < 20) {
-        this.player.takeDamage(3, 'chemical_spill');
+        this.player.takeDamage(3, "chemical_spill");
       }
     });
 
     // Столкновения с каплями кислоты
-    this.acidDroplets.forEach(droplet => {
+    this.acidDroplets.forEach((droplet) => {
       if (this.isColliding(this.player, droplet)) {
-        this.player.takeDamage(2, 'acid_droplet');
+        this.player.takeDamage(2, "acid_droplet");
         droplet.y = -10;
       }
     });
@@ -1301,7 +1363,7 @@ export class ChemicalScene extends BaseScene {
     const playerPos = this.player.getPosition();
     const distance = Math.sqrt(
       Math.pow(playerPos.x - this.exitPoint.x, 2) +
-      Math.pow(playerPos.y - this.exitPoint.y, 2)
+        Math.pow(playerPos.y - this.exitPoint.y, 2),
     );
 
     if (distance < 50) {
@@ -1316,18 +1378,22 @@ export class ChemicalScene extends BaseScene {
     if (this.isLevelComplete) return;
     this.isLevelComplete = true;
 
-    this.audioManager.playSFX('level-complete', { volume: 0.7 });
+    this.audioManager.playSFX("level-complete", { volume: 0.7 });
 
     this.eventBus.emit(GameEvent.SCENE_CHANGE, {
-      from: 'chemical',
-      to: 'soldiers',
+      from: "chemical",
+      to: "soldiers",
     });
 
     setTimeout(() => {
-      this.sceneManager.switchTo('soldiers', {}, {
-        type: 'fade',
-        duration: 1500,
-      });
+      this.sceneManager.switchTo(
+        "soldiers",
+        {},
+        {
+          type: "fade",
+          duration: 1500,
+        },
+      );
     }, 2000);
   }
 
@@ -1338,10 +1404,12 @@ export class ChemicalScene extends BaseScene {
     const boundsA = a.getBounds();
     const boundsB = b.getBounds();
 
-    return boundsA.x < boundsB.x + boundsB.width &&
-           boundsA.x + boundsA.width > boundsB.x &&
-           boundsA.y < boundsB.y + boundsB.height &&
-           boundsA.y + boundsA.height > boundsB.y;
+    return (
+      boundsA.x < boundsB.x + boundsB.width &&
+      boundsA.x + boundsA.width > boundsB.x &&
+      boundsA.y < boundsB.y + boundsB.height &&
+      boundsA.y + boundsA.height > boundsB.y
+    );
   }
 
   /**
@@ -1349,7 +1417,9 @@ export class ChemicalScene extends BaseScene {
    */
   private updateHUD(): void {
     // Обновление индикатора токсичности
-    const toxicityText = this.dangerIndicator.getChildByLabel('toxicityText') as Text;
+    const toxicityText = this.dangerIndicator.getChildByLabel(
+      "toxicityText",
+    ) as Text;
     if (toxicityText) {
       toxicityText.text = `Токсичность: ${Math.floor(this.toxicLevel)}%`;
 
@@ -1367,7 +1437,9 @@ export class ChemicalScene extends BaseScene {
     // Обновление индикатора противогаза
     if (this.isWearingGasMask) {
       this.gasMaskIndicator.visible = true;
-      const maskText = this.gasMaskIndicator.getChildByLabel('maskText') as Text;
+      const maskText = this.gasMaskIndicator.getChildByLabel(
+        "maskText",
+      ) as Text;
       if (maskText) {
         maskText.text = `Противогаз: ${Math.floor(this.gasMaskDurability)}%`;
       }
@@ -1375,7 +1447,7 @@ export class ChemicalScene extends BaseScene {
 
     // Обновление подсказки головоломки
     if (this.isPuzzleComplete) {
-      this.puzzleHint.text = 'Система труб настроена!';
+      this.puzzleHint.text = "Система труб настроена!";
       this.puzzleHint.style.fill = 0x00ff00;
     }
   }
@@ -1394,7 +1466,7 @@ export class ChemicalScene extends BaseScene {
     const offsetY = 50;
 
     // Рисуем узлы
-    this.puzzleNodes.forEach(node => {
+    this.puzzleNodes.forEach((node) => {
       const nodeGraphic = new Graphics();
       const x = offsetX + node.x * scale;
       const y = offsetY + node.y * scale;
@@ -1402,16 +1474,16 @@ export class ChemicalScene extends BaseScene {
       nodeGraphic.circle(x, y, 5);
 
       switch (node.type) {
-        case 'start':
+        case "start":
           nodeGraphic.fill({ color: 0x00ff00 });
           break;
-        case 'end':
+        case "end":
           nodeGraphic.fill({ color: 0xff0000 });
           break;
-        case 'valve':
+        case "valve":
           nodeGraphic.fill({ color: node.isActive ? 0x00ff00 : 0xff0000 });
           break;
-        case 'junction':
+        case "junction":
           nodeGraphic.fill({ color: 0xffff00 });
           break;
       }
@@ -1420,12 +1492,12 @@ export class ChemicalScene extends BaseScene {
     });
 
     // Рисуем соединения
-    this.puzzleNodes.forEach(node => {
+    this.puzzleNodes.forEach((node) => {
       const startX = offsetX + node.x * scale;
       const startY = offsetY + node.y * scale;
 
-      node.connections.forEach(connId => {
-        const connNode = this.puzzleNodes.find(n => n.id === connId);
+      node.connections.forEach((connId) => {
+        const connNode = this.puzzleNodes.find((n) => n.id === connId);
         if (!connNode) return;
 
         const endX = offsetX + connNode.x * scale;
@@ -1450,7 +1522,7 @@ export class ChemicalScene extends BaseScene {
     const duration = 1000;
     const startTime = Date.now();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -1483,7 +1555,7 @@ export class ChemicalScene extends BaseScene {
     const message = new Text({
       text,
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 14,
         fill: color,
       }),
@@ -1502,12 +1574,12 @@ export class ChemicalScene extends BaseScene {
    * Обработчик смерти игрока
    */
   private onPlayerDeath(): void {
-    this.audioManager.playSFX('death-sound', { volume: 0.7 });
+    this.audioManager.playSFX("death-sound", { volume: 0.7 });
 
     const deathText = new Text({
-      text: 'ВЫ ПОГИБЛИ',
+      text: "ВЫ ПОГИБЛИ",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 32,
         fill: 0x88ff00,
       }),
@@ -1517,7 +1589,7 @@ export class ChemicalScene extends BaseScene {
     this.addChild(deathText);
 
     setTimeout(() => {
-      this.sceneManager.switchTo('chemical');
+      this.sceneManager.switchTo("chemical");
     }, 2000);
   }
 
@@ -1534,7 +1606,7 @@ export class ChemicalScene extends BaseScene {
   private onMonsterDestroy(): void {
     // Может выпасть предмет
     if (Math.random() < 0.3) {
-      this.showMessage('Выпал фильтр для противогаза!', 0x00ff00);
+      this.showMessage("Выпал фильтр для противогаза!", 0x00ff00);
       this.gasMaskDurability = 100;
       this.isWearingGasMask = true;
     }
@@ -1547,7 +1619,7 @@ export class ChemicalScene extends BaseScene {
     if (this.isPuzzleActive) {
       this.togglePuzzle();
     } else {
-      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: 'escape' });
+      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: "escape" });
     }
   }
 
@@ -1556,7 +1628,7 @@ export class ChemicalScene extends BaseScene {
    */
   public async cleanup(): Promise<void> {
     this.audioManager.stopAll(500);
-    this.mutants.forEach(m => m.destroy());
+    this.mutants.forEach((m) => m.destroy());
     this.mutants.length = 0;
     this.gasVents.length = 0;
     this.gasClouds.length = 0;

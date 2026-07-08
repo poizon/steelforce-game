@@ -1,10 +1,10 @@
 // src/scenes/BaseScene.ts
-import { Container, Application } from 'pixi.js';
-import { EventBus } from '../core/EventBus';
-import { InputManager } from '../core/InputManager';
-import { AudioManager } from '../core/AudioManager';
-import { AssetLoader } from '../core/AssetLoader';
-import type { SceneManager, SceneName } from '../core/SceneManager';
+import { Container, Application } from "pixi.js";
+import { EventBus } from "../core/EventBus";
+import { InputManager } from "../core/InputManager";
+import { AudioManager } from "../core/AudioManager";
+import { AssetLoader } from "../core/AssetLoader";
+import type { SceneManager, SceneName } from "../core/SceneManager";
 
 export abstract class BaseScene extends Container {
   protected readonly app: Application;
@@ -25,7 +25,7 @@ export abstract class BaseScene extends Container {
     eventBus: EventBus,
     inputManager: InputManager,
     audioManager: AudioManager,
-    assetLoader: AssetLoader
+    assetLoader: AssetLoader,
   ) {
     super();
 
@@ -93,14 +93,14 @@ export abstract class BaseScene extends Container {
   }
 
   protected delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   protected async fadeIn(duration: number = 500): Promise<void> {
     this.alpha = 0;
     const startTime = Date.now();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -121,7 +121,7 @@ export abstract class BaseScene extends Container {
     this.alpha = 1;
     const startTime = Date.now();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);

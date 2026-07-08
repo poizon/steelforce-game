@@ -1,5 +1,5 @@
-import { Assets, Texture, Spritesheet, Sound } from 'pixi.js';
-import { EventBus } from './EventBus';
+import { Assets, Texture, Spritesheet } from "pixi.js";
+import { EventBus } from "./EventBus";
 
 export interface AssetManifest {
   bundles: AssetBundle[];
@@ -14,7 +14,7 @@ export interface AssetDefinition {
   alias: string;
   src: string;
   format?: string;
-  loadType?: 'texture' | 'spritesheet' | 'sound' | 'font' | 'json';
+  loadType?: "texture" | "spritesheet" | "sound" | "font" | "json";
   data?: Record<string, unknown>;
 }
 
@@ -50,18 +50,20 @@ export class AssetLoader {
    */
   public async loadManifest(manifest: AssetManifest): Promise<void> {
     if (this._isLoading) {
-      console.warn('Asset loading already in progress');
+      console.warn("Asset loading already in progress");
       return;
     }
 
     try {
       this._isLoading = true;
-      this.eventBus.emit('assets:loading:start', { totalBundles: manifest.bundles.length });
+      this.eventBus.emit("assets:loading:start", {
+        totalBundles: manifest.bundles.length,
+      });
 
       // Подсчитываем общее количество ресурсов
       this._totalAssets = manifest.bundles.reduce(
         (total, bundle) => total + bundle.assets.length,
-        0
+        0,
       );
       this._loadedAssetsCount = 0;
 
@@ -70,16 +72,17 @@ export class AssetLoader {
         await this.loadBundle(bundle);
       }
 
-      this.eventBus.emit('assets:loading:complete', {
+      this.eventBus.emit("assets:loading:complete", {
         totalLoaded: this._loadedAssetsCount,
         bundles: Array.from(this.loadedBundles),
       });
 
-      console.log(`All assets loaded successfully. Total: ${this._loadedAssetsCount}`);
-
+      console.log(
+        `All assets loaded successfully. Total: ${this._loadedAssetsCount}`,
+      );
     } catch (error) {
-      console.error('Failed to load manifest:', error);
-      this.eventBus.emit('assets:loading:error', { error });
+      console.error("Failed to load manifest:", error);
+      this.eventBus.emit("assets:loading:error", { error });
       throw error;
     } finally {
       this._isLoading = false;
@@ -119,19 +122,19 @@ export class AssetLoader {
    * Обрабатывает загрузку ресурсов бандла
    */
   private async processBundle(bundle: AssetBundle): Promise<void> {
-    this.eventBus.emit('assets:bundle:start', {
+    this.eventBus.emit("assets:bundle:start", {
       bundleName: bundle.name,
       assetCount: bundle.assets.length,
     });
 
     // Загружаем ресурсы параллельно в рамках бандла
-    const loadPromises = bundle.assets.map(asset =>
-      this.loadAsset(asset, bundle.name)
+    const loadPromises = bundle.assets.map((asset) =>
+      this.loadAsset(asset, bundle.name),
     );
 
     await Promise.all(loadPromises);
 
-    this.eventBus.emit('assets:bundle:complete', {
+    this.eventBus.emit("assets:bundle:complete", {
       bundleName: bundle.name,
     });
   }
@@ -141,7 +144,7 @@ export class AssetLoader {
    */
   private async loadAsset(
     asset: AssetDefinition,
-    bundleName: string
+    bundleName: string,
   ): Promise<void> {
     try {
       // Проверяем, не загружен ли уже этот ресурс
@@ -156,19 +159,19 @@ export class AssetLoader {
       let loadedAsset: unknown;
 
       switch (loadType) {
-        case 'texture':
+        case "texture":
           loadedAsset = await this.loadTexture(asset);
           break;
-        case 'spritesheet':
+        case "spritesheet":
           loadedAsset = await this.loadSpritesheet(asset);
           break;
-        case 'sound':
+        case "sound":
           loadedAsset = await this.loadSound(asset);
           break;
-        case 'font':
+        case "font":
           loadedAsset = await this.loadFont(asset);
           break;
-        case 'json':
+        case "json":
           loadedAsset = await this.loadJSON(asset);
           break;
         default:
@@ -180,11 +183,10 @@ export class AssetLoader {
 
       // Обновляем прогресс
       this.updateProgress(bundleName, asset.alias);
-
     } catch (error) {
       console.error(`Failed to load asset "${asset.alias}":`, error);
 
-      this.eventBus.emit('assets:asset:error', {
+      this.eventBus.emit("assets:asset:error", {
         bundleName,
         assetAlias: asset.alias,
         error,
@@ -227,7 +229,7 @@ export class AssetLoader {
   private async loadSound(asset: AssetDefinition): Promise<Sound> {
     const sound = await Assets.load({
       src: asset.src,
-      loadParser: 'loadSound',
+      loadParser: "loadSound",
       ...asset.data,
     });
 
@@ -237,7 +239,7 @@ export class AssetLoader {
 
     // Предзагружаем аудио для быстрого воспроизведения
     if (sound instanceof HTMLAudioElement) {
-      sound.preload = 'auto';
+      sound.preload = "auto";
       sound.load();
     }
 
@@ -282,20 +284,20 @@ export class AssetLoader {
    */
   private async loadPlaceholder(asset: AssetDefinition): Promise<void> {
     // Создаём простой цветной квадрат как плейсхолдер
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = 64;
     canvas.height = 64;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (ctx) {
       // Рисуем предупреждающий узор
-      ctx.fillStyle = '#FF00FF'; // Яркий мадженов цвет
+      ctx.fillStyle = "#FF00FF"; // Яркий мадженов цвет
       ctx.fillRect(0, 0, 64, 64);
 
-      ctx.fillStyle = '#000000';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('MISSING', 32, 32);
+      ctx.fillStyle = "#000000";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("MISSING", 32, 32);
     }
 
     const texture = Texture.from(canvas);
@@ -305,30 +307,30 @@ export class AssetLoader {
   /**
    * Определяет тип загрузки по расширению файла
    */
-  private detectLoadType(src: string): AssetDefinition['loadType'] {
-    const extension = src.split('.').pop()?.toLowerCase();
+  private detectLoadType(src: string): AssetDefinition["loadType"] {
+    const extension = src.split(".").pop()?.toLowerCase();
 
     switch (extension) {
-      case 'png':
-      case 'jpg':
-      case 'jpeg':
-      case 'gif':
-      case 'webp':
-        return 'texture';
-      case 'json':
-        return src.includes('spritesheet') ? 'spritesheet' : 'json';
-      case 'mp3':
-      case 'wav':
-      case 'ogg':
-      case 'm4a':
-        return 'sound';
-      case 'ttf':
-      case 'otf':
-      case 'woff':
-      case 'woff2':
-        return 'font';
+      case "png":
+      case "jpg":
+      case "jpeg":
+      case "gif":
+      case "webp":
+        return "texture";
+      case "json":
+        return src.includes("spritesheet") ? "spritesheet" : "json";
+      case "mp3":
+      case "wav":
+      case "ogg":
+      case "m4a":
+        return "sound";
+      case "ttf":
+      case "otf":
+      case "woff":
+      case "woff2":
+        return "font";
       default:
-        return 'texture'; // По умолчанию считаем текстурой
+        return "texture"; // По умолчанию считаем текстурой
     }
   }
 
@@ -351,7 +353,7 @@ export class AssetLoader {
     this.onProgress?.(progress);
 
     // Эмитим событие прогресса
-    this.eventBus.emit('assets:progress', progressData);
+    this.eventBus.emit("assets:progress", progressData);
   }
 
   /**
@@ -432,7 +434,7 @@ export class AssetLoader {
 
     // Находим все ресурсы бандла и выгружаем их
     for (const [alias, asset] of this.loadedAssets.entries()) {
-      if (asset && typeof asset === 'object' && 'bundleName' in asset) {
+      if (asset && typeof asset === "object" && "bundleName" in asset) {
         if ((asset as any).bundleName === bundleName) {
           this.unload(alias);
         }
@@ -472,7 +474,7 @@ export class AssetLoader {
     // Загружаем ресурсы сцены
     const sceneAssets = this.getSceneAssets(sceneName);
     await Promise.all(
-      sceneAssets.map(asset => this.loadAsset(asset, sceneBundle))
+      sceneAssets.map((asset) => this.loadAsset(asset, sceneBundle)),
     );
   }
 
@@ -483,13 +485,13 @@ export class AssetLoader {
     // Можно хранить маппинг сцен на ресурсы в конфигурации
     const sceneAssetsMap: Record<string, AssetDefinition[]> = {
       menu: [
-        { alias: 'menu-bg', src: '/assets/backgrounds/menu-bg.png' },
-        { alias: 'btn-start', src: '/assets/sprites/btn-start.png' },
+        { alias: "menu-bg", src: "/assets/backgrounds/menu-bg.png" },
+        { alias: "btn-start", src: "/assets/sprites/btn-start.png" },
       ],
       assembly: [
-        { alias: 'assembly-bg', src: '/assets/backgrounds/assembly-bg.png' },
-        { alias: 'zombie-worker', src: '/assets/sprites/zombie-worker.png' },
-        { alias: 'gear', src: '/assets/sprites/gear.png' },
+        { alias: "assembly-bg", src: "/assets/backgrounds/assembly-bg.png" },
+        { alias: "zombie-worker", src: "/assets/sprites/zombie-worker.png" },
+        { alias: "gear", src: "/assets/sprites/gear.png" },
       ],
       // Добавляем ресурсы для других сцен
     };
@@ -506,9 +508,8 @@ export class AssetLoader {
       loadedAssets: this._loadedAssetsCount,
       loadedBundles: this.loadedBundles.size,
       isLoading: this._isLoading,
-      progress: this._totalAssets > 0
-        ? this._loadedAssetsCount / this._totalAssets
-        : 0,
+      progress:
+        this._totalAssets > 0 ? this._loadedAssetsCount / this._totalAssets : 0,
       memoryUsage: this.calculateMemoryUsage(),
     };
   }
@@ -541,19 +542,23 @@ export class AssetLoader {
    * Для отладки: выводит список загруженных ресурсов
    */
   public debug(): void {
-    console.group('AssetLoader Debug');
-    console.log('Total assets:', this._totalAssets);
-    console.log('Loaded assets:', this._loadedAssetsCount);
-    console.log('Loaded bundles:', Array.from(this.loadedBundles));
-    console.log('Is loading:', this._isLoading);
-    console.log('Memory usage:', this.calculateMemoryUsage());
+    console.group("AssetLoader Debug");
+    console.log("Total assets:", this._totalAssets);
+    console.log("Loaded assets:", this._loadedAssetsCount);
+    console.log("Loaded bundles:", Array.from(this.loadedBundles));
+    console.log("Is loading:", this._isLoading);
+    console.log("Memory usage:", this.calculateMemoryUsage());
 
-    console.group('Loaded assets:');
+    console.group("Loaded assets:");
     for (const [alias, asset] of this.loadedAssets.entries()) {
-      const type = asset instanceof Texture ? 'Texture' :
-                   asset instanceof HTMLAudioElement ? 'Audio' :
-                   asset instanceof FontFace ? 'Font' :
-                   typeof asset;
+      const type =
+        asset instanceof Texture
+          ? "Texture"
+          : asset instanceof HTMLAudioElement
+            ? "Audio"
+            : asset instanceof FontFace
+              ? "Font"
+              : typeof asset;
       console.log(`  ${alias}: ${type}`);
     }
     console.groupEnd();

@@ -1,11 +1,18 @@
-import { Container, Sprite, Graphics, Text, TextStyle, AnimatedSprite } from 'pixi.js';
-import { BaseScene } from './BaseScene';
-import { GameEvent } from '../core/EventBus';
-import { Player } from '../entities/Player';
-import { Soldier } from '../entities/Soldier';
-import { DialogBox } from '../components/DialogBox';
-import type { SceneName } from '../core/SceneManager';
-import type { Vector2 } from '../types';
+import {
+  Container,
+  Sprite,
+  Graphics,
+  Text,
+  TextStyle,
+  AnimatedSprite,
+} from "pixi.js";
+import * as BaseScene from "./BaseScene";
+import { GameEvent } from "../core/EventBus";
+import { Player } from "../entities/Player";
+import { Soldier } from "../entities/Soldier";
+import { DialogBox } from "../components/DialogBox";
+import type { SceneName } from "../core/SceneManager";
+import type { Vector2 } from "../types";
 
 interface QuestItem {
   id: string;
@@ -23,7 +30,7 @@ interface DialogOption {
   condition?: () => boolean;
 }
 
-export class SoldiersScene extends BaseScene {
+export class SoldiersScene extends BaseScene.BaseScene {
   // Игрок
   private player!: Player;
 
@@ -64,7 +71,8 @@ export class SoldiersScene extends BaseScene {
   // Состояния
   private isLevelComplete: boolean = false;
   private isPlayerDead: boolean = false;
-  private gamePhase: 'dialogue' | 'search' | 'delivery' | 'complete' = 'dialogue';
+  private gamePhase: "dialogue" | "search" | "delivery" | "complete" =
+    "dialogue";
   private currentDialogIndex: number = 0;
   private searchTimer: number = 0;
   private searchTimeLimit: number = 18000; // 5 минут в кадрах
@@ -73,13 +81,13 @@ export class SoldiersScene extends BaseScene {
   private introductionDialogues: Array<{
     speaker: string;
     text: string;
-    emotion?: 'neutral' | 'angry' | 'suspicious' | 'demanding';
+    emotion?: "neutral" | "angry" | "suspicious" | "demanding";
   }> = [];
 
   private deliveryDialogues: Array<{
     speaker: string;
     text: string;
-    emotion?: 'neutral' | 'angry' | 'satisfied' | 'impatient';
+    emotion?: "neutral" | "angry" | "satisfied" | "impatient";
   }> = [];
 
   // Размеры уровня
@@ -87,7 +95,7 @@ export class SoldiersScene extends BaseScene {
   private levelHeight: number = 720;
 
   protected getSceneName(): SceneName {
-    return 'soldiers';
+    return "soldiers";
   }
 
   protected async preload(): Promise<void> {
@@ -116,27 +124,27 @@ export class SoldiersScene extends BaseScene {
 
   protected bindEvents(): void {
     // Управление игроком
-    this.inputManager.onKeyDown('ArrowLeft', () => this.movePlayer(-1, 0));
-    this.inputManager.onKeyDown('ArrowRight', () => this.movePlayer(1, 0));
-    this.inputManager.onKeyDown('ArrowUp', () => this.movePlayer(0, -1));
-    this.inputManager.onKeyDown('ArrowDown', () => this.movePlayer(0, 1));
-    this.inputManager.onKeyDown(' ', (event) => {
+    this.inputManager.onKeyDown("ArrowLeft", () => this.movePlayer(-1, 0));
+    this.inputManager.onKeyDown("ArrowRight", () => this.movePlayer(1, 0));
+    this.inputManager.onKeyDown("ArrowUp", () => this.movePlayer(0, -1));
+    this.inputManager.onKeyDown("ArrowDown", () => this.movePlayer(0, 1));
+    this.inputManager.onKeyDown(" ", (event) => {
       event?.preventDefault();
       this.playerInteract();
     });
-    this.inputManager.onKeyDown('E', (event) => {
+    this.inputManager.onKeyDown("E", (event) => {
       event?.preventDefault();
       this.playerInteract();
     });
 
     // Инвентарь
-    this.inputManager.onKeyDown('I', (event) => {
+    this.inputManager.onKeyDown("I", (event) => {
       event?.preventDefault();
       this.toggleQuestLog();
     });
 
     // Пауза
-    this.inputManager.onKeyDown('Escape', this.onEscape.bind(this));
+    this.inputManager.onKeyDown("Escape", this.onEscape.bind(this));
 
     // События
     this.eventBus.on(GameEvent.PLAYER_DEATH, this.onPlayerDeath.bind(this));
@@ -147,13 +155,13 @@ export class SoldiersScene extends BaseScene {
   protected async onEnter(): Promise<void> {
     // Атмосферная музыка
     this.audioManager.stopAll(500);
-    this.audioManager.playMusic('tense-music', {
+    this.audioManager.playMusic("tense-music", {
       volume: 0.3,
       fadeIn: 1000,
     });
 
     // Звуки улицы
-    this.audioManager.playAmbient('street-ambient', {
+    this.audioManager.playAmbient("street-ambient", {
       volume: 0.2,
       fadeIn: 2000,
     });
@@ -175,7 +183,7 @@ export class SoldiersScene extends BaseScene {
     this.updateSoldiers(delta);
 
     // Обновление поиска
-    if (this.gamePhase === 'search') {
+    if (this.gamePhase === "search") {
       this.updateSearchTimer(delta);
     }
 
@@ -189,7 +197,7 @@ export class SoldiersScene extends BaseScene {
     this.checkInteractions();
 
     // Проверка условий доставки
-    if (this.gamePhase === 'delivery') {
+    if (this.gamePhase === "delivery") {
       this.checkDeliveryConditions();
     }
   }
@@ -200,41 +208,41 @@ export class SoldiersScene extends BaseScene {
   private initQuestItems(): void {
     this.questItems = [
       {
-        id: 'medkit',
-        name: 'Аптечка',
-        description: 'Военная аптечка первой помощи',
+        id: "medkit",
+        name: "Аптечка",
+        description: "Военная аптечка первой помощи",
         location: { x: 400, y: 300 },
         found: false,
         delivered: false,
       },
       {
-        id: 'ammo_box',
-        name: 'Ящик с патронами',
-        description: 'Запечатанный ящик боеприпасов',
+        id: "ammo_box",
+        name: "Ящик с патронами",
+        description: "Запечатанный ящик боеприпасов",
         location: { x: 800, y: 450 },
         found: false,
         delivered: false,
       },
       {
-        id: 'radio_parts',
-        name: 'Детали рации',
-        description: 'Запчасти для полевой радиостанции',
+        id: "radio_parts",
+        name: "Детали рации",
+        description: "Запчасти для полевой радиостанции",
         location: { x: 1200, y: 350 },
         found: false,
         delivered: false,
       },
       {
-        id: 'water_supply',
-        name: 'Запасы воды',
-        description: 'Канистра с чистой водой',
+        id: "water_supply",
+        name: "Запасы воды",
+        description: "Канистра с чистой водой",
         location: { x: 1600, y: 500 },
         found: false,
         delivered: false,
       },
       {
-        id: 'fuel_canister',
-        name: 'Канистра топлива',
-        description: 'Канистра с горючим для генератора',
+        id: "fuel_canister",
+        name: "Канистра топлива",
+        description: "Канистра с горючим для генератора",
         location: { x: 2000, y: 400 },
         found: false,
         delivered: false,
@@ -243,7 +251,7 @@ export class SoldiersScene extends BaseScene {
 
     // Солдатам нужно 3 случайных предмета
     const shuffled = [...this.questItems].sort(() => Math.random() - 0.5);
-    this.requiredItems = shuffled.slice(0, 3).map(item => item.id);
+    this.requiredItems = shuffled.slice(0, 3).map((item) => item.id);
   }
 
   /**
@@ -252,50 +260,52 @@ export class SoldiersScene extends BaseScene {
   private initDialogues(): void {
     this.introductionDialogues = [
       {
-        speaker: 'Сержант',
-        text: 'СТОЯТЬ! Никому не пройти через тоннель без специального разрешения.',
-        emotion: 'angry',
+        speaker: "Сержант",
+        text: "СТОЯТЬ! Никому не пройти через тоннель без специального разрешения.",
+        emotion: "angry",
       },
       {
-        speaker: 'Сержант',
-        text: 'У нас приказ: никого не пропускать. Но... возможно мы сможем договориться.',
-        emotion: 'suspicious',
+        speaker: "Сержант",
+        text: "У нас приказ: никого не пропускать. Но... возможно мы сможем договориться.",
+        emotion: "suspicious",
       },
       {
-        speaker: 'Сержант',
-        text: 'Нам нужны припасы. Разграбленные здания вокруг полны полезных вещей.',
-        emotion: 'neutral',
+        speaker: "Сержант",
+        text: "Нам нужны припасы. Разграбленные здания вокруг полны полезных вещей.",
+        emotion: "neutral",
       },
       {
-        speaker: 'Сержант',
-        text: `Принесите нам следующие предметы: ${this.requiredItems.map(id => {
-          const item = this.questItems.find(i => i.id === id);
-          return item?.name || id;
-        }).join(', ')}.`,
-        emotion: 'demanding',
+        speaker: "Сержант",
+        text: `Принесите нам следующие предметы: ${this.requiredItems
+          .map((id) => {
+            const item = this.questItems.find((i) => i.id === id);
+            return item?.name || id;
+          })
+          .join(", ")}.`,
+        emotion: "demanding",
       },
       {
-        speaker: 'Сержант',
-        text: 'Найдите эти предметы в округе и принесите их нам. Тогда мы пропустим вас через тоннель.',
-        emotion: 'neutral',
+        speaker: "Сержант",
+        text: "Найдите эти предметы в округе и принесите их нам. Тогда мы пропустим вас через тоннель.",
+        emotion: "neutral",
       },
       {
-        speaker: 'Сержант',
-        text: 'Но поторопитесь! У нас приказ взорвать тоннель через 5 минут. Время пошло!',
-        emotion: 'angry',
+        speaker: "Сержант",
+        text: "Но поторопитесь! У нас приказ взорвать тоннель через 5 минут. Время пошло!",
+        emotion: "angry",
       },
     ];
 
     this.deliveryDialogues = [
       {
-        speaker: 'Сержант',
-        text: 'Отлично! Вы принесли всё что нужно. Мы сдержим слово.',
-        emotion: 'satisfied',
+        speaker: "Сержант",
+        text: "Отлично! Вы принесли всё что нужно. Мы сдержим слово.",
+        emotion: "satisfied",
       },
       {
-        speaker: 'Сержант',
-        text: 'Проходите через тоннель, пока есть время. Удачи вам!',
-        emotion: 'neutral',
+        speaker: "Сержант",
+        text: "Проходите через тоннель, пока есть время. Удачи вам!",
+        emotion: "neutral",
       },
     ];
   }
@@ -329,7 +339,7 @@ export class SoldiersScene extends BaseScene {
     for (let i = 0; i < 12; i++) {
       const building = this.createRuinedBuilding(
         i * 200 + Math.random() * 50,
-        200 + Math.random() * 200
+        200 + Math.random() * 200,
       );
       this.background.addChild(building);
     }
@@ -362,7 +372,7 @@ export class SoldiersScene extends BaseScene {
         building.circle(
           x + 20 + Math.random() * 40,
           400 - height + Math.random() * (height - 40),
-          Math.random() * 10 + 3
+          Math.random() * 10 + 3,
         );
         building.fill({ color: 0x000000, alpha: 0.5 });
       }
@@ -374,7 +384,7 @@ export class SoldiersScene extends BaseScene {
         building.circle(
           x + 20 + Math.random() * 40,
           400 - height + 20 + Math.random() * (height - 60),
-          Math.random() * 5 + 2
+          Math.random() * 5 + 2,
         );
         building.fill({ color: 0xff4400, alpha: 0.6 });
       }
@@ -405,7 +415,10 @@ export class SoldiersScene extends BaseScene {
       const startX = Math.random() * this.levelWidth;
       const startY = 420 + Math.random() * 200;
       road.moveTo(startX, startY);
-      road.lineTo(startX + Math.random() * 30 - 15, startY + Math.random() * 20);
+      road.lineTo(
+        startX + Math.random() * 30 - 15,
+        startY + Math.random() * 20,
+      );
       road.stroke({ width: 1, color: 0x222222 });
     }
 
@@ -418,7 +431,7 @@ export class SoldiersScene extends BaseScene {
       debris.fill({ color: 0x555555 });
       debris.position.set(
         Math.random() * this.levelWidth,
-        420 + Math.random() * 200
+        420 + Math.random() * 200,
       );
       debris.rotation = Math.random() * Math.PI * 2;
       this.streetContainer.addChild(debris);
@@ -428,7 +441,7 @@ export class SoldiersScene extends BaseScene {
     for (let i = 0; i < 5; i++) {
       const car = this.createAbandonedCar(
         200 + i * 500 + Math.random() * 200,
-        470 + Math.random() * 50
+        470 + Math.random() * 50,
       );
       this.streetContainer.addChild(car);
     }
@@ -485,8 +498,8 @@ export class SoldiersScene extends BaseScene {
     for (let i = 0; i < 8; i++) {
       const sandbag = new Graphics();
       sandbag.ellipse(0, 0, 25, 12);
-      sandbag.fill({ color: 0x8B7355 });
-      sandbag.stroke({ width: 1, color: 0x6B5335 });
+      sandbag.fill({ color: 0x8b7355 });
+      sandbag.stroke({ width: 1, color: 0x6b5335 });
       sandbag.position.set(i * 30, 60 - (i % 2) * 15);
       this.barricade.addChild(sandbag);
     }
@@ -515,9 +528,9 @@ export class SoldiersScene extends BaseScene {
     sign.stroke({ width: 1, color: 0xcc0000 });
 
     const signText = new Text({
-      text: 'СТОП',
+      text: "СТОП",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0xffffff,
       }),
@@ -559,9 +572,9 @@ export class SoldiersScene extends BaseScene {
 
     // Знак тоннеля
     const tunnelSign = new Text({
-      text: 'ТОННЕЛЬ №7',
+      text: "ТОННЕЛЬ №7",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x888888,
       }),
@@ -575,9 +588,9 @@ export class SoldiersScene extends BaseScene {
     warningSign.fill({ color: 0xffaa00 });
 
     const warningText = new Text({
-      text: '!',
+      text: "!",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0x000000,
       }),
@@ -593,7 +606,7 @@ export class SoldiersScene extends BaseScene {
    * Создание зон поиска
    */
   private createSearchZones(): void {
-    this.questItems.forEach(item => {
+    this.questItems.forEach((item) => {
       const zone = new Container();
       zone.position.set(item.location.x, item.location.y);
       zone.name = `search_zone_${item.id}`;
@@ -630,7 +643,7 @@ export class SoldiersScene extends BaseScene {
     const graphics = new Graphics();
 
     switch (item.id) {
-      case 'medkit':
+      case "medkit":
         graphics.rect(-8, -6, 16, 12);
         graphics.fill({ color: 0xffffff });
         graphics.stroke({ width: 1, color: 0xff0000 });
@@ -641,10 +654,10 @@ export class SoldiersScene extends BaseScene {
         graphics.fill({ color: 0xff0000 });
         break;
 
-      case 'ammo_box':
+      case "ammo_box":
         graphics.rect(-10, -6, 20, 12);
-        graphics.fill({ color: 0x556B2F });
-        graphics.stroke({ width: 1, color: 0x8B7355 });
+        graphics.fill({ color: 0x556b2f });
+        graphics.stroke({ width: 1, color: 0x8b7355 });
         // Пули
         for (let i = 0; i < 3; i++) {
           graphics.rect(-6 + i * 5, -4, 2, 6);
@@ -652,7 +665,7 @@ export class SoldiersScene extends BaseScene {
         }
         break;
 
-      case 'radio_parts':
+      case "radio_parts":
         graphics.rect(-8, -8, 16, 16);
         graphics.fill({ color: 0x444444 });
         graphics.stroke({ width: 1, color: 0x666666 });
@@ -667,7 +680,7 @@ export class SoldiersScene extends BaseScene {
         }
         break;
 
-      case 'water_supply':
+      case "water_supply":
         graphics.rect(-6, -10, 12, 20);
         graphics.fill({ color: 0x4488ff, alpha: 0.5 });
         graphics.stroke({ width: 1, color: 0x6688ff });
@@ -676,7 +689,7 @@ export class SoldiersScene extends BaseScene {
         graphics.fill({ color: 0xff0000 });
         break;
 
-      case 'fuel_canister':
+      case "fuel_canister":
         graphics.rect(-7, -10, 14, 20);
         graphics.fill({ color: 0xff4400 });
         graphics.stroke({ width: 1, color: 0xcc3300 });
@@ -695,7 +708,7 @@ export class SoldiersScene extends BaseScene {
     const label = new Text({
       text: item.name,
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0xffffff,
       }),
@@ -727,15 +740,21 @@ export class SoldiersScene extends BaseScene {
     ];
 
     // Лидер (сержант)
-    this.soldierLeader = new Soldier(this.eventBus, 'sergeant');
-    this.soldierLeader.setPosition(this.soldierPositions[0].x, this.soldierPositions[0].y);
+    this.soldierLeader = new Soldier(this.eventBus, "sergeant");
+    this.soldierLeader.setPosition(
+      this.soldierPositions[0].x,
+      this.soldierPositions[0].y,
+    );
     this.soldiers.push(this.soldierLeader);
     this.addChild(this.soldierLeader);
 
     // Рядовые
     for (let i = 1; i < this.soldierPositions.length; i++) {
-      const soldier = new Soldier(this.eventBus, 'private');
-      soldier.setPosition(this.soldierPositions[i].x, this.soldierPositions[i].y);
+      const soldier = new Soldier(this.eventBus, "private");
+      soldier.setPosition(
+        this.soldierPositions[i].x,
+        this.soldierPositions[i].y,
+      );
       this.soldiers.push(soldier);
       this.addChild(soldier);
     }
@@ -770,7 +789,7 @@ export class SoldiersScene extends BaseScene {
       particle.fill({ color: 0x888888, alpha: Math.random() * 0.3 });
       particle.position.set(
         Math.random() * this.levelWidth,
-        Math.random() * this.levelHeight
+        Math.random() * this.levelHeight,
       );
       this.dustParticles.push(particle);
       this.addChild(particle);
@@ -783,7 +802,7 @@ export class SoldiersScene extends BaseScene {
       drop.fill({ color: 0x4488ff, alpha: Math.random() * 0.3 });
       drop.position.set(
         Math.random() * this.levelWidth,
-        Math.random() * this.levelHeight
+        Math.random() * this.levelHeight,
       );
       this.rainDrops.push(drop);
       this.addChild(drop);
@@ -798,9 +817,9 @@ export class SoldiersScene extends BaseScene {
 
     // Цель
     this.objectiveText = new Text({
-      text: '',
+      text: "",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xff6600,
         wordWrap: true,
@@ -811,9 +830,9 @@ export class SoldiersScene extends BaseScene {
 
     // Счётчик предметов
     this.itemCountText = new Text({
-      text: 'Предметы: 0/3',
+      text: "Предметы: 0/3",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 14,
         fill: 0xffffff,
       }),
@@ -822,9 +841,9 @@ export class SoldiersScene extends BaseScene {
 
     // Подсказка взаимодействия
     this.interactionHint = new Text({
-      text: '',
+      text: "",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0xffff00,
       }),
@@ -833,7 +852,11 @@ export class SoldiersScene extends BaseScene {
     this.interactionHint.anchor.set(0.5, 1);
     this.interactionHint.visible = false;
 
-    this.hudContainer.addChild(this.objectiveText, this.itemCountText, this.interactionHint);
+    this.hudContainer.addChild(
+      this.objectiveText,
+      this.itemCountText,
+      this.interactionHint,
+    );
     this.addChild(this.hudContainer);
 
     // Журнал квестов
@@ -856,9 +879,9 @@ export class SoldiersScene extends BaseScene {
     container.addChild(bg);
 
     const title = new Text({
-      text: 'ЖУРНАЛ ЗАДАНИЙ',
+      text: "ЖУРНАЛ ЗАДАНИЙ",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 16,
         fill: 0xffff00,
       }),
@@ -869,9 +892,9 @@ export class SoldiersScene extends BaseScene {
     // Список предметов
     this.questItems.forEach((item, index) => {
       const itemText = new Text({
-        text: `${item.name}: ${item.found ? (item.delivered ? 'Доставлен' : 'Найден') : 'Не найден'}`,
+        text: `${item.name}: ${item.found ? (item.delivered ? "Доставлен" : "Найден") : "Не найден"}`,
         style: new TextStyle({
-          fontFamily: 'Press Start 2P',
+          fontFamily: "Press Start 2P",
           fontSize: 10,
           fill: item.delivered ? 0x00ff00 : item.found ? 0xffff00 : 0xff0000,
         }),
@@ -882,9 +905,9 @@ export class SoldiersScene extends BaseScene {
     });
 
     const closeHint = new Text({
-      text: 'Нажмите I для закрытия',
+      text: "Нажмите I для закрытия",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0x888888,
       }),
@@ -909,7 +932,7 @@ export class SoldiersScene extends BaseScene {
    */
   private async startIntroDialogue(): Promise<void> {
     this.isDialogActive = true;
-    this.gamePhase = 'dialogue';
+    this.gamePhase = "dialogue";
     this.dialogBox.visible = true;
 
     for (const line of this.introductionDialogues) {
@@ -920,9 +943,9 @@ export class SoldiersScene extends BaseScene {
 
     this.dialogBox.visible = false;
     this.isDialogActive = false;
-    this.gamePhase = 'search';
+    this.gamePhase = "search";
 
-    this.eventBus.emit(GameEvent.DIALOG_END, { dialogueId: 'soldier_intro' });
+    this.eventBus.emit(GameEvent.DIALOG_END, { dialogueId: "soldier_intro" });
   }
 
   /**
@@ -933,15 +956,10 @@ export class SoldiersScene extends BaseScene {
     text: string;
     emotion?: string;
   }): Promise<void> {
-    return new Promise(resolve => {
-      this.dialogBox.show(
-        line.speaker,
-        line.text,
-        line.emotion as any,
-        () => {
-          setTimeout(resolve, 500);
-        }
-      );
+    return new Promise((resolve) => {
+      this.dialogBox.show(line.speaker, line.text, line.emotion as any, () => {
+        setTimeout(resolve, 500);
+      });
     });
   }
 
@@ -949,7 +967,8 @@ export class SoldiersScene extends BaseScene {
    * Движение игрока
    */
   private movePlayer(dx: number, dy: number): void {
-    if (this.isPlayerDead || this.isLevelComplete || this.isDialogActive) return;
+    if (this.isPlayerDead || this.isLevelComplete || this.isDialogActive)
+      return;
 
     const speed = 3;
     this.player.x += dx * speed;
@@ -957,13 +976,16 @@ export class SoldiersScene extends BaseScene {
 
     // Ограничение в пределах уровня
     this.player.x = Math.max(10, Math.min(this.levelWidth - 10, this.player.x));
-    this.player.y = Math.max(300, Math.min(this.levelHeight - 30, this.player.y));
+    this.player.y = Math.max(
+      300,
+      Math.min(this.levelHeight - 30, this.player.y),
+    );
 
     // Нельзя пройти через баррикаду
     if (this.player.x > 280 && this.player.x < 550 && this.player.y > 380) {
-      if (this.gamePhase !== 'complete') {
+      if (this.gamePhase !== "complete") {
         this.player.x = dx > 0 ? 280 : 550;
-        this.showInteractionHint('Солдаты не пропускают!');
+        this.showInteractionHint("Солдаты не пропускают!");
       }
     }
   }
@@ -996,7 +1018,7 @@ export class SoldiersScene extends BaseScene {
 
     const distance = Math.sqrt(
       Math.pow(playerPos.x - leaderPos.x, 2) +
-      Math.pow(playerPos.y - leaderPos.y, 2)
+        Math.pow(playerPos.y - leaderPos.y, 2),
     );
 
     return distance < 80;
@@ -1006,16 +1028,16 @@ export class SoldiersScene extends BaseScene {
    * Взаимодействие с солдатами
    */
   private interactWithSoldiers(): void {
-    if (this.gamePhase === 'search') {
+    if (this.gamePhase === "search") {
       // Проверяем доставку предметов
       const hasItems = this.checkIfHoldingRequiredItems();
 
       if (hasItems) {
         this.startDeliveryDialogue();
       } else {
-        this.showInteractionHint('Нужно принести все предметы!');
+        this.showInteractionHint("Нужно принести все предметы!");
       }
-    } else if (this.gamePhase === 'complete') {
+    } else if (this.gamePhase === "complete") {
       this.enterTunnel();
     }
   }
@@ -1024,8 +1046,8 @@ export class SoldiersScene extends BaseScene {
    * Проверка наличия предметов у игрока
    */
   private checkIfHoldingRequiredItems(): boolean {
-    return this.requiredItems.every(id => {
-      const item = this.questItems.find(i => i.id === id);
+    return this.requiredItems.every((id) => {
+      const item = this.questItems.find((i) => i.id === id);
       return item?.found && !item.delivered;
     });
   }
@@ -1035,12 +1057,12 @@ export class SoldiersScene extends BaseScene {
    */
   private async startDeliveryDialogue(): Promise<void> {
     this.isDialogActive = true;
-    this.gamePhase = 'delivery';
+    this.gamePhase = "delivery";
     this.dialogBox.visible = true;
 
     // Отмечаем предметы как доставленные
-    this.requiredItems.forEach(id => {
-      const item = this.questItems.find(i => i.id === id);
+    this.requiredItems.forEach((id) => {
+      const item = this.questItems.find((i) => i.id === id);
       if (item) {
         item.delivered = true;
         this.deliveredItems.add(id);
@@ -1053,12 +1075,14 @@ export class SoldiersScene extends BaseScene {
 
     this.dialogBox.visible = false;
     this.isDialogActive = false;
-    this.gamePhase = 'complete';
+    this.gamePhase = "complete";
 
     // Открываем проход
     this.openTunnelPassage();
 
-    this.eventBus.emit(GameEvent.DIALOG_END, { dialogueId: 'soldier_delivery' });
+    this.eventBus.emit(GameEvent.DIALOG_END, {
+      dialogueId: "soldier_delivery",
+    });
   }
 
   /**
@@ -1066,14 +1090,14 @@ export class SoldiersScene extends BaseScene {
    */
   private openTunnelPassage(): void {
     // Убираем невидимую стену
-    this.showMessage('Проход открыт! Скорее в тоннель!', 0x00ff00);
+    this.showMessage("Проход открыт! Скорее в тоннель!", 0x00ff00);
 
     // Анимация открытия
     this.tunnelEntrance.alpha = 0.5;
 
     const pulseEffect = () => {
       this.tunnelEntrance.alpha = 0.5 + Math.sin(Date.now() * 0.005) * 0.3;
-      if (this.gamePhase === 'complete') {
+      if (this.gamePhase === "complete") {
         requestAnimationFrame(pulseEffect);
       } else {
         this.tunnelEntrance.alpha = 1;
@@ -1089,7 +1113,7 @@ export class SoldiersScene extends BaseScene {
     if (this.isLevelComplete) return;
     this.isLevelComplete = true;
 
-    this.audioManager.playSFX('tunnel-enter', { volume: 0.7 });
+    this.audioManager.playSFX("tunnel-enter", { volume: 0.7 });
 
     // Анимация входа
     const fadeOut = () => {
@@ -1109,12 +1133,12 @@ export class SoldiersScene extends BaseScene {
   private completeGame(): void {
     // Финальный экран
     const victoryText = new Text({
-      text: 'ПОЗДРАВЛЯЕМ!\n\nВы успешно покинули город\nчерез тоннель!',
+      text: "ПОЗДРАВЛЯЕМ!\n\nВы успешно покинули город\nчерез тоннель!",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 24,
         fill: 0x00ff00,
-        align: 'center',
+        align: "center",
         lineHeight: 40,
       }),
     });
@@ -1123,12 +1147,12 @@ export class SoldiersScene extends BaseScene {
     this.addChild(victoryText);
 
     const creditsText = new Text({
-      text: 'SteelForce: Escape from Zone\n\nСпасибо за игру!',
+      text: "SteelForce: Escape from Zone\n\nСпасибо за игру!",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 14,
         fill: 0xffffff,
-        align: 'center',
+        align: "center",
         lineHeight: 25,
       }),
     });
@@ -1137,7 +1161,7 @@ export class SoldiersScene extends BaseScene {
     this.addChild(creditsText);
 
     this.eventBus.emit(GameEvent.GAME_OVER, {
-      reason: 'completed',
+      reason: "completed",
       score: this.deliveredItems.size * 100,
     });
   }
@@ -1148,12 +1172,12 @@ export class SoldiersScene extends BaseScene {
   private checkItemPickup(): void {
     const playerPos = this.player.getPosition();
 
-    this.questItems.forEach(item => {
+    this.questItems.forEach((item) => {
       if (item.found) return;
 
       const distance = Math.sqrt(
         Math.pow(playerPos.x - item.location.x, 2) +
-        Math.pow(playerPos.y - item.location.y, 2)
+          Math.pow(playerPos.y - item.location.y, 2),
       );
 
       if (distance < 30) {
@@ -1164,10 +1188,10 @@ export class SoldiersScene extends BaseScene {
         }
 
         this.showInteractionHint(`Найдено: ${item.name}!`);
-        this.audioManager.playSFX('item-pickup', { volume: 0.5 });
+        this.audioManager.playSFX("item-pickup", { volume: 0.5 });
 
         this.eventBus.emit(GameEvent.ITEM_COLLECT, {
-          type: 'quest_item',
+          type: "quest_item",
           alias: item.id,
         });
 
@@ -1177,7 +1201,9 @@ export class SoldiersScene extends BaseScene {
     });
 
     // Обновляем счётчик
-    const foundCount = this.questItems.filter(item => item.found && !item.delivered).length;
+    const foundCount = this.questItems.filter(
+      (item) => item.found && !item.delivered,
+    ).length;
     this.itemCountText.text = `Предметы: ${foundCount}/${this.requiredItems.length}`;
   }
 
@@ -1198,11 +1224,11 @@ export class SoldiersScene extends BaseScene {
     const playerPos = this.player.getPosition();
 
     // Проверка близости к предметам
-    const nearItem = this.questItems.find(item => {
+    const nearItem = this.questItems.find((item) => {
       if (item.found) return false;
       const distance = Math.sqrt(
         Math.pow(playerPos.x - item.location.x, 2) +
-        Math.pow(playerPos.y - item.location.y, 2)
+          Math.pow(playerPos.y - item.location.y, 2),
       );
       return distance < 50;
     });
@@ -1213,10 +1239,10 @@ export class SoldiersScene extends BaseScene {
     // Показываем подсказку
     if (nearItem) {
       this.showInteractionHint(`Нажмите E чтобы подобрать ${nearItem.name}`);
-    } else if (nearSoldiers && this.gamePhase === 'complete') {
-      this.showInteractionHint('Нажмите E чтобы войти в тоннель');
+    } else if (nearSoldiers && this.gamePhase === "complete") {
+      this.showInteractionHint("Нажмите E чтобы войти в тоннель");
     } else if (nearSoldiers && this.checkIfHoldingRequiredItems()) {
-      this.showInteractionHint('Нажмите E чтобы передать предметы');
+      this.showInteractionHint("Нажмите E чтобы передать предметы");
     } else {
       this.hideInteractionHint();
     }
@@ -1226,7 +1252,7 @@ export class SoldiersScene extends BaseScene {
    * Обновление солдат
    */
   private updateSoldiers(delta: number): void {
-    this.soldiers.forEach(soldier => {
+    this.soldiers.forEach((soldier) => {
       soldier.update(delta);
 
       // Солдаты следят за игроком
@@ -1265,7 +1291,7 @@ export class SoldiersScene extends BaseScene {
    * Время вышло
    */
   private timeUp(): void {
-    this.showMessage('ВРЕМЯ ВЫШЛО! Солдаты взрывают тоннель!', 0xff0000);
+    this.showMessage("ВРЕМЯ ВЫШЛО! Солдаты взрывают тоннель!", 0xff0000);
 
     // Анимация взрыва
     setTimeout(() => {
@@ -1284,7 +1310,7 @@ export class SoldiersScene extends BaseScene {
     explosion.position.set(2100, 380);
     this.addChild(explosion);
 
-    this.audioManager.playSFX('explosion', { volume: 0.8 });
+    this.audioManager.playSFX("explosion", { volume: 0.8 });
 
     // Тряска экрана
     const shake = () => {
@@ -1299,7 +1325,7 @@ export class SoldiersScene extends BaseScene {
     // Game Over
     setTimeout(() => {
       this.eventBus.emit(GameEvent.GAME_OVER, {
-        reason: 'time_up',
+        reason: "time_up",
         score: 0,
       });
     }, 3000);
@@ -1310,7 +1336,7 @@ export class SoldiersScene extends BaseScene {
    */
   private updateEffects(delta: number): void {
     // Пыль
-    this.dustParticles.forEach(particle => {
+    this.dustParticles.forEach((particle) => {
       particle.y -= delta * 0.2;
       particle.x += Math.sin(Date.now() * 0.001 + particle.y) * delta * 0.1;
 
@@ -1321,7 +1347,7 @@ export class SoldiersScene extends BaseScene {
     });
 
     // Дождь
-    this.rainDrops.forEach(drop => {
+    this.rainDrops.forEach((drop) => {
       drop.y += delta * 2;
 
       if (drop.y > this.levelHeight) {
@@ -1336,24 +1362,27 @@ export class SoldiersScene extends BaseScene {
    */
   private updateHUD(): void {
     switch (this.gamePhase) {
-      case 'search':
-        this.objectiveText.text = 'Найдите и принесите требуемые предметы солдатам';
-        const remainingTime = Math.floor((this.searchTimeLimit - this.searchTimer) / 60);
+      case "search":
+        this.objectiveText.text =
+          "Найдите и принесите требуемые предметы солдатам";
+        const remainingTime = Math.floor(
+          (this.searchTimeLimit - this.searchTimer) / 60,
+        );
         const minutes = Math.floor(remainingTime / 60);
         const seconds = remainingTime % 60;
-        this.objectiveText.text += `\nВремя: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        this.objectiveText.text += `\nВремя: ${minutes}:${seconds.toString().padStart(2, "0")}`;
         break;
 
-      case 'delivery':
-        this.objectiveText.text = 'Передайте предметы сержанту';
+      case "delivery":
+        this.objectiveText.text = "Передайте предметы сержанту";
         break;
 
-      case 'complete':
-        this.objectiveText.text = 'Войдите в тоннель!';
+      case "complete":
+        this.objectiveText.text = "Войдите в тоннель!";
         break;
 
       default:
-        this.objectiveText.text = '';
+        this.objectiveText.text = "";
     }
   }
 
@@ -1361,7 +1390,7 @@ export class SoldiersScene extends BaseScene {
    * Обновление цели
    */
   private updateObjectiveText(): void {
-    this.objectiveText.text = 'Все предметы доставлены! Войдите в тоннель!';
+    this.objectiveText.text = "Все предметы доставлены! Войдите в тоннель!";
     this.objectiveText.style.fill = 0x00ff00;
   }
 
@@ -1369,11 +1398,17 @@ export class SoldiersScene extends BaseScene {
    * Обновление журнала квестов
    */
   private updateQuestLog(): void {
-    this.questItems.forEach(item => {
-      const textElement = this.questLog.getChildByLabel(`quest_item_${item.id}`) as Text;
+    this.questItems.forEach((item) => {
+      const textElement = this.questLog.getChildByLabel(
+        `quest_item_${item.id}`,
+      ) as Text;
       if (textElement) {
-        textElement.text = `${item.name}: ${item.found ? (item.delivered ? 'Доставлен' : 'Найден') : 'Не найден'}`;
-        textElement.style.fill = item.delivered ? 0x00ff00 : item.found ? 0xffff00 : 0xff0000;
+        textElement.text = `${item.name}: ${item.found ? (item.delivered ? "Доставлен" : "Найден") : "Не найден"}`;
+        textElement.style.fill = item.delivered
+          ? 0x00ff00
+          : item.found
+            ? 0xffff00
+            : 0xff0000;
       }
     });
   }
@@ -1411,7 +1446,7 @@ export class SoldiersScene extends BaseScene {
     const message = new Text({
       text,
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 14,
         fill: color,
       }),
@@ -1430,8 +1465,8 @@ export class SoldiersScene extends BaseScene {
    * Обработчик сбора предмета
    */
   private onItemCollect(data: { type: string; alias: string }): void {
-    if (data.type === 'quest_item') {
-      const item = this.questItems.find(i => i.id === data.alias);
+    if (data.type === "quest_item") {
+      const item = this.questItems.find((i) => i.id === data.alias);
       if (item) {
         this.showMessage(`Получено: ${item.name}`, 0xffff00);
       }
@@ -1450,9 +1485,9 @@ export class SoldiersScene extends BaseScene {
    */
   private onPlayerDeath(): void {
     const deathText = new Text({
-      text: 'ВЫ ПОГИБЛИ',
+      text: "ВЫ ПОГИБЛИ",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 32,
         fill: 0xff0000,
       }),
@@ -1462,7 +1497,7 @@ export class SoldiersScene extends BaseScene {
     this.addChild(deathText);
 
     setTimeout(() => {
-      this.sceneManager.switchTo('soldiers');
+      this.sceneManager.switchTo("soldiers");
     }, 2000);
   }
 
@@ -1473,7 +1508,7 @@ export class SoldiersScene extends BaseScene {
     if (this.questLog.visible) {
       this.toggleQuestLog();
     } else {
-      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: 'escape' });
+      this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: "escape" });
     }
   }
 
@@ -1482,7 +1517,7 @@ export class SoldiersScene extends BaseScene {
    */
   public async cleanup(): Promise<void> {
     this.audioManager.stopAll(500);
-    this.soldiers.forEach(s => s.destroy());
+    this.soldiers.forEach((s) => s.destroy());
     this.soldiers.length = 0;
     this.questItems.length = 0;
     this.dustParticles.length = 0;

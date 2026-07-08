@@ -1,11 +1,4 @@
-import {
-  Container,
-  Sprite,
-  AnimatedSprite,
-  Graphics,
-  Text,
-  Texture,
-} from "pixi.js";
+import * as pixiJs from "pixi.js";
 import { EventBus } from "../core/EventBus";
 import { GameEvent } from "../core/EventBus";
 
@@ -20,7 +13,7 @@ export type PlayerState =
   "idle" | "running" | "jumping" | "falling" | "damaged" | "dead";
 export type PlayerDirection = "left" | "right";
 
-export class Player extends Container {
+export class Player extends pixiJs.Container {
   private readonly eventBus: EventBus;
 
   // Конфигурация
@@ -41,19 +34,19 @@ export class Player extends Container {
   private isMoving: boolean = false;
 
   // Анимации
-  private sprite!: AnimatedSprite;
-  private idleTextures: Texture[] = [];
-  private runTextures: Texture[] = [];
-  private jumpTextures: Texture[] = [];
-  private fallTextures: Texture[] = [];
-  private damageTextures: Texture[] = [];
-  private deathTextures: Texture[] = [];
+  private sprite!: pixiJs.AnimatedSprite;
+  private idleTextures: pixiJs.Texture[] = [];
+  private runTextures: pixiJs.Texture[] = [];
+  private jumpTextures: pixiJs.Texture[] = [];
+  private fallTextures: pixiJs.Texture[] = [];
+  private damageTextures: pixiJs.Texture[] = [];
+  private deathTextures: pixiJs.Texture[] = [];
 
   // Визуальные эффекты
-  private shadow!: Graphics;
-  private damageEffect!: Graphics;
-  private invincibilityShield!: Graphics;
-  private dustParticles: Graphics[] = [];
+  private shadow!: pixiJs.Graphics;
+  private damageEffect!: pixiJs.Graphics;
+  private invincibilityShield!: pixiJs.Graphics;
+  private dustParticles: pixiJs.Graphics[] = [];
 
   // Физика
   public velocityX: number = 0;
@@ -106,7 +99,7 @@ export class Player extends Container {
    * Создание тени
    */
   private createShadow(): void {
-    this.shadow = new Graphics();
+    this.shadow = new pixiJs.Graphics();
     this.shadow.ellipse(0, 0, 20, 8);
     this.shadow.fill({ color: 0x000000, alpha: 0.3 });
     this.shadow.y = 25;
@@ -133,7 +126,7 @@ export class Player extends Container {
   /**
    * Создание заглушки текстуры
    */
-  private createPlaceholderTexture(color: number): Texture {
+  private createPlaceholderTexture(color: number): pixiJs.Texture {
     const canvas = document.createElement("canvas");
     canvas.width = 48;
     canvas.height = 64;
@@ -172,14 +165,14 @@ export class Player extends Container {
       ctx.fillRect(34, 22, 8, 20);
     }
 
-    return Texture.from(canvas);
+    return pixiJs.Texture.from(canvas);
   }
 
   /**
    * Создание спрайта
    */
   private createSprite(): void {
-    this.sprite = new AnimatedSprite(this.idleTextures);
+    this.sprite = new pixiJs.AnimatedSprite(this.idleTextures);
     this.sprite.anchor.set(0.5);
     this.sprite.animationSpeed = 0.1;
     this.sprite.play();
@@ -191,14 +184,14 @@ export class Player extends Container {
    */
   private createEffects(): void {
     // Эффект урона
-    this.damageEffect = new Graphics();
+    this.damageEffect = new pixiJs.Graphics();
     this.damageEffect.circle(0, 0, 30);
     this.damageEffect.fill({ color: 0xff0000, alpha: 0 });
     this.damageEffect.visible = false;
     this.addChild(this.damageEffect);
 
     // Щит неуязвимости
-    this.invincibilityShield = new Graphics();
+    this.invincibilityShield = new pixiJs.Graphics();
     this.invincibilityShield.circle(0, 0, 35);
     this.invincibilityShield.fill({ color: 0x00ff00, alpha: 0 });
     this.invincibilityShield.visible = false;
@@ -215,8 +208,8 @@ export class Player extends Container {
   /**
    * Создание частицы пыли
    */
-  private createDustParticle(): Graphics {
-    const particle = new Graphics();
+  private createDustParticle(): pixiJs.Graphics {
+    const particle = new pixiJs.Graphics();
     particle.circle(0, 0, Math.random() * 2 + 1);
     particle.fill({ color: 0x888888, alpha: 0 });
     particle.y = 30;
@@ -288,7 +281,7 @@ export class Player extends Container {
    * Обновление анимации
    */
   private updateAnimation(delta: number): void {
-    let targetTextures: Texture[];
+    let targetTextures: pixiJs.Texture[];
 
     switch (this.state) {
       case "idle":
@@ -574,7 +567,7 @@ export class Player extends Container {
    * Эффект лечения
    */
   private showHealEffect(): void {
-    const healEffect = new Graphics();
+    const healEffect = new pixiJs.Graphics();
     healEffect.circle(0, 0, 30);
     healEffect.fill({ color: 0x00ff00, alpha: 0.5 });
     this.addChild(healEffect);
@@ -633,7 +626,7 @@ export class Player extends Container {
   /**
    * Получение свободной частицы пыли
    */
-  private getDustParticle(): Graphics {
+  private getDustParticle(): pixiJs.Graphics {
     // Находим неактивную частицу
     const particle = this.dustParticles.find((p) => p.alpha <= 0);
     if (particle) {

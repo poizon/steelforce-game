@@ -1,7 +1,14 @@
-import { Container, Sprite, Text, TextStyle, Graphics, BlurFilter } from 'pixi.js';
-import { BaseScene } from './BaseScene';
-import { GameEvent } from '../core/EventBus';
-import type { SceneName, SceneTransitionOptions } from '../core/SceneManager';
+import {
+  Container,
+  Sprite,
+  Text,
+  TextStyle,
+  Graphics,
+  BlurFilter,
+} from "pixi.js";
+import { BaseScene } from "./BaseScene";
+import { GameEvent } from "../core/EventBus";
+import type { SceneName, SceneTransitionOptions } from "../core/SceneManager";
 
 export class MenuScene extends BaseScene {
   // Элементы сцены
@@ -26,21 +33,21 @@ export class MenuScene extends BaseScene {
   private hasSaveGame: boolean = false;
 
   protected getSceneName(): SceneName {
-    return 'menu';
+    return "menu";
   }
 
   protected async preload(): Promise<void> {
     // Проверяем наличие сохранения
     this.hasSaveGame = this.checkSaveGame();
-    console.log('Has save game:', this.hasSaveGame);
+    console.log("Has save game:", this.hasSaveGame);
   }
 
   protected setup(): void {
     // Проверяем, что все необходимые текстуры загружены
-    const hasMenuBg = this.assetLoader.has('menu-background');
-    const hasLogo = this.assetLoader.has('menu-logo');
+    const hasMenuBg = this.assetLoader.has("menu-background");
+    const hasLogo = this.assetLoader.has("menu-logo");
 
-    console.log('Menu assets loaded:', { hasMenuBg, hasLogo });
+    console.log("Menu assets loaded:", { hasMenuBg, hasLogo });
 
     this.createBackground();
     this.createVignette();
@@ -58,11 +65,11 @@ export class MenuScene extends BaseScene {
 
   protected bindEvents(): void {
     // Навигация по кнопкам с клавиатуры
-    this.inputManager.onKeyDown('ArrowUp', () => this.selectPreviousButton());
-    this.inputManager.onKeyDown('ArrowDown', () => this.selectNextButton());
-    this.inputManager.onKeyDown('Enter', () => this.activateCurrentButton());
-    this.inputManager.onKeyDown('Space', () => this.activateCurrentButton());
-    this.inputManager.onKeyDown('Escape', () => this.onEscapePressed());
+    this.inputManager.onKeyDown("ArrowUp", () => this.selectPreviousButton());
+    this.inputManager.onKeyDown("ArrowDown", () => this.selectNextButton());
+    this.inputManager.onKeyDown("Enter", () => this.activateCurrentButton());
+    this.inputManager.onKeyDown("Space", () => this.activateCurrentButton());
+    this.inputManager.onKeyDown("Escape", () => this.onEscapePressed());
 
     // Обработка изменения размера окна
     this.eventBus.on(GameEvent.WINDOW_RESIZE, (data) => {
@@ -70,25 +77,25 @@ export class MenuScene extends BaseScene {
     });
 
     // Для отладки
-    console.log('MenuScene events bound');
+    console.log("MenuScene events bound");
   }
 
   protected async onEnter(): Promise<void> {
-    console.log('MenuScene entered');
+    console.log("MenuScene entered");
 
     // Проверяем, что sceneManager доступен
     if (!this.sceneManager) {
-      console.error('SceneManager is not available in MenuScene!');
+      console.error("SceneManager is not available in MenuScene!");
     }
 
     // Запускаем музыку меню
     try {
-      await this.audioManager.playMusic('menu-music', {
+      await this.audioManager.playMusic("menu-music", {
         volume: 0.4,
         fadeIn: 2000,
       });
     } catch (error) {
-      console.warn('Failed to play menu music:', error);
+      console.warn("Failed to play menu music:", error);
     }
 
     // Анимация появления
@@ -124,7 +131,7 @@ export class MenuScene extends BaseScene {
    */
   private createBackground(): void {
     try {
-      const texture = this.assetLoader.getTexture('menu-background');
+      const texture = this.assetLoader.getTexture("menu-background");
 
       this.background = new Sprite(texture);
       this.background.width = this.app.screen.width;
@@ -136,7 +143,7 @@ export class MenuScene extends BaseScene {
 
       this.addChild(this.background);
     } catch (error) {
-      console.warn('Failed to load menu background, using fallback');
+      console.warn("Failed to load menu background, using fallback");
       // Создаём запасной фон
       const fallbackBg = new Graphics();
       fallbackBg.rect(0, 0, this.app.screen.width, this.app.screen.height);
@@ -158,7 +165,7 @@ export class MenuScene extends BaseScene {
     this.vignette.circle(width / 2, height / 2, Math.min(width, height) * 0.4);
     this.vignette.fill({ color: 0x000000, alpha: 0 });
 
-    this.vignette.blendMode = 'multiply';
+    this.vignette.blendMode = "multiply";
     this.addChild(this.vignette);
   }
 
@@ -196,7 +203,7 @@ export class MenuScene extends BaseScene {
    */
   private createLogo(): void {
     try {
-      const texture = this.assetLoader.getTexture('menu-logo');
+      const texture = this.assetLoader.getTexture("menu-logo");
       this.logo = new Sprite(texture);
       this.logo.anchor.set(0.5);
       this.logo.x = this.app.screen.width / 2;
@@ -206,7 +213,7 @@ export class MenuScene extends BaseScene {
       this.addChild(this.logo);
     } catch (error) {
       // Если логотип не загружен, создаём текстовый заголовок
-      console.warn('Logo texture not found, using text fallback');
+      console.warn("Logo texture not found, using text fallback");
       this.logo = new Sprite(); // Пустой спрайт как заглушка
     }
   }
@@ -216,9 +223,9 @@ export class MenuScene extends BaseScene {
    */
   private createTitle(): void {
     this.titleText = new Text({
-      text: 'SteelForce',
+      text: "SteelForce",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P, monospace',
+        fontFamily: "Press Start 2P, monospace",
         fontSize: 48,
         fill: 0xff6600,
         stroke: { color: 0x000000, width: 4 },
@@ -244,9 +251,9 @@ export class MenuScene extends BaseScene {
    */
   private createSubtitle(): void {
     this.subtitleText = new Text({
-      text: 'Escape from Zone',
+      text: "Escape from Zone",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P, monospace',
+        fontFamily: "Press Start 2P, monospace",
         fontSize: 20,
         fill: 0xcccccc,
         letterSpacing: 4,
@@ -267,25 +274,25 @@ export class MenuScene extends BaseScene {
   private createButtons(): void {
     const buttonConfigs = [
       {
-        text: 'Новая игра',
+        text: "Новая игра",
         y: 0.55,
         action: () => this.onStartGame(),
         disabled: false,
       },
       {
-        text: 'Продолжить',
+        text: "Продолжить",
         y: 0.62,
         action: () => this.onContinue(),
         disabled: !this.hasSaveGame,
       },
       {
-        text: 'Настройки',
+        text: "Настройки",
         y: 0.69,
         action: () => this.onSettings(),
         disabled: false,
       },
       {
-        text: 'Авторы',
+        text: "Авторы",
         y: 0.76,
         action: () => this.onCredits(),
         disabled: false,
@@ -294,18 +301,20 @@ export class MenuScene extends BaseScene {
 
     buttonConfigs.forEach((config, index) => {
       const button = this.createButton(config.text, config.y, config.disabled);
-      button.eventMode = 'static';
-      button.cursor = config.disabled ? 'default' : 'pointer';
+      button.eventMode = "static";
+      button.cursor = config.disabled ? "default" : "pointer";
 
-      button.on('pointerover', () => {
+      button.on("pointerover", () => {
         if (!config.disabled) {
           this.selectButton(index);
         }
       });
 
-      button.on('pointerdown', () => {
+      button.on("pointerdown", () => {
         if (!config.disabled && !this.isTransitioning) {
-          this.audioManager.playSFX('dialog-click', { volume: 0.5 }).catch(() => {});
+          this.audioManager
+            .playSFX("dialog-click", { volume: 0.5 })
+            .catch(() => {});
           config.action();
         }
       });
@@ -323,7 +332,11 @@ export class MenuScene extends BaseScene {
   /**
    * Создание отдельной кнопки
    */
-  private createButton(text: string, yPercent: number, disabled: boolean): Container {
+  private createButton(
+    text: string,
+    yPercent: number,
+    disabled: boolean,
+  ): Container {
     const container = new Container();
     container.x = this.app.screen.width / 2;
     container.y = this.app.screen.height * yPercent;
@@ -340,7 +353,7 @@ export class MenuScene extends BaseScene {
     const buttonText = new Text({
       text,
       style: new TextStyle({
-        fontFamily: 'Press Start 2P, monospace',
+        fontFamily: "Press Start 2P, monospace",
         fontSize: 16,
         fill: disabled ? 0x666666 : 0xffffff,
         letterSpacing: 2,
@@ -351,9 +364,9 @@ export class MenuScene extends BaseScene {
 
     // Индикатор выбора (стрелка слева)
     const indicator = new Text({
-      text: '▸',
+      text: "▸",
       style: new TextStyle({
-        fontFamily: 'monospace',
+        fontFamily: "monospace",
         fontSize: 16,
         fill: 0xff6600,
       }),
@@ -361,7 +374,7 @@ export class MenuScene extends BaseScene {
     indicator.anchor.set(0.5);
     indicator.x = -170;
     indicator.alpha = 0;
-    indicator.label = 'indicator';
+    indicator.label = "indicator";
     container.addChild(indicator);
 
     return container;
@@ -372,9 +385,9 @@ export class MenuScene extends BaseScene {
    */
   private createVersionText(): void {
     const versionText = new Text({
-      text: 'v0.1.0 alpha',
+      text: "v0.1.0 alpha",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P, monospace',
+        fontFamily: "Press Start 2P, monospace",
         fontSize: 10,
         fill: 0x666666,
       }),
@@ -392,7 +405,11 @@ export class MenuScene extends BaseScene {
    */
   private async animateElementsIn(): Promise<void> {
     // Логотип
-    const logoTween = this.createTween(this.logo, { alpha: 1, scaleX: 1, scaleY: 1 }, 1000);
+    const logoTween = this.createTween(
+      this.logo,
+      { alpha: 1, scaleX: 1, scaleY: 1 },
+      1000,
+    );
     await this.delay(300);
 
     // Заголовок
@@ -400,7 +417,11 @@ export class MenuScene extends BaseScene {
     await this.delay(200);
 
     // Подзаголовок
-    const subtitleTween = this.createTween(this.subtitleText, { alpha: 1 }, 800);
+    const subtitleTween = this.createTween(
+      this.subtitleText,
+      { alpha: 1 },
+      800,
+    );
 
     // Кнопки появляются последовательно
     for (let i = 0; i < this.buttons.length; i++) {
@@ -418,7 +439,8 @@ export class MenuScene extends BaseScene {
     if (!this.logo) return;
 
     this.logoFloatOffset += delta * 0.02;
-    this.logo.y = this.app.screen.height * 0.25 + Math.sin(this.logoFloatOffset) * 10;
+    this.logo.y =
+      this.app.screen.height * 0.25 + Math.sin(this.logoFloatOffset) * 10;
     this.logo.rotation = Math.sin(this.logoFloatOffset * 0.5) * 0.02;
   }
 
@@ -445,7 +467,9 @@ export class MenuScene extends BaseScene {
     this.smokeEffect.clear();
 
     for (let i = 0; i < 5; i++) {
-      const x = this.app.screen.width * 0.2 + Math.sin(this.time + i) * this.app.screen.width * 0.3;
+      const x =
+        this.app.screen.width * 0.2 +
+        Math.sin(this.time + i) * this.app.screen.width * 0.3;
       const y = this.app.screen.height * 0.8 + i * 30;
 
       this.smokeEffect.circle(x, y, 50 + i * 20);
@@ -460,7 +484,7 @@ export class MenuScene extends BaseScene {
     for (let i = 0; i < this.buttons.length; i++) {
       const button = this.buttons[i];
       const bg = button.children[0] as Graphics;
-      const indicator = button.getChildByLabel('indicator') as Text;
+      const indicator = button.getChildByLabel("indicator") as Text;
 
       if (!bg || !indicator) continue;
 
@@ -480,7 +504,10 @@ export class MenuScene extends BaseScene {
         bg.clear();
         bg.rect(-150, -20, 300, 40);
         bg.fill({ color: 0x000000, alpha: 0.5 });
-        bg.stroke({ width: 1, color: this.isButtonDisabled(button) ? 0x444444 : 0x666666 });
+        bg.stroke({
+          width: 1,
+          color: this.isButtonDisabled(button) ? 0x444444 : 0x666666,
+        });
       }
     }
   }
@@ -493,7 +520,9 @@ export class MenuScene extends BaseScene {
     while (nextIndex < this.buttons.length) {
       if (!this.isButtonDisabled(this.buttons[nextIndex])) {
         this.selectButton(nextIndex);
-        this.audioManager.playSFX('dialog-click', { volume: 0.3 }).catch(() => {});
+        this.audioManager
+          .playSFX("dialog-click", { volume: 0.3 })
+          .catch(() => {});
         return;
       }
       nextIndex++;
@@ -508,7 +537,9 @@ export class MenuScene extends BaseScene {
     while (prevIndex >= 0) {
       if (!this.isButtonDisabled(this.buttons[prevIndex])) {
         this.selectButton(prevIndex);
-        this.audioManager.playSFX('dialog-click', { volume: 0.3 }).catch(() => {});
+        this.audioManager
+          .playSFX("dialog-click", { volume: 0.3 })
+          .catch(() => {});
         return;
       }
       prevIndex--;
@@ -532,7 +563,7 @@ export class MenuScene extends BaseScene {
 
     const button = this.buttons[this.selectedButtonIndex];
     if (button && !this.isButtonDisabled(button)) {
-      button.emit('pointerdown');
+      button.emit("pointerdown");
     }
   }
 
@@ -543,7 +574,7 @@ export class MenuScene extends BaseScene {
     if (this.isTransitioning) return;
     this.isTransitioning = true;
 
-    console.log('Starting new game...');
+    console.log("Starting new game...");
 
     try {
       await this.animateButtonPress(this.buttons[0]);
@@ -551,20 +582,24 @@ export class MenuScene extends BaseScene {
 
       // Проверяем, что sceneManager доступен
       if (!this.sceneManager) {
-        console.error('SceneManager is not available!');
+        console.error("SceneManager is not available!");
         this.isTransitioning = false;
         return;
       }
 
       // Переход к сцене новостей
-      await this.sceneManager.switchTo('news', {}, {
-        type: 'fade',
-        duration: 1000,
-      });
+      await this.sceneManager.switchTo(
+        "news",
+        {},
+        {
+          type: "fade",
+          duration: 1000,
+        },
+      );
 
-      console.log('Switched to news scene');
+      console.log("Switched to news scene");
     } catch (error) {
-      console.error('Failed to start new game:', error);
+      console.error("Failed to start new game:", error);
       this.isTransitioning = false;
     }
   }
@@ -576,13 +611,13 @@ export class MenuScene extends BaseScene {
     if (this.isTransitioning || !this.hasSaveGame) return;
     this.isTransitioning = true;
 
-    console.log('Continuing game...');
+    console.log("Continuing game...");
 
     try {
       await this.animateButtonPress(this.buttons[1]);
 
       if (!this.sceneManager) {
-        console.error('SceneManager is not available!');
+        console.error("SceneManager is not available!");
         this.isTransitioning = false;
         return;
       }
@@ -591,10 +626,10 @@ export class MenuScene extends BaseScene {
 
       if (!loaded) {
         this.isTransitioning = false;
-        console.warn('Failed to load save game');
+        console.warn("Failed to load save game");
       }
     } catch (error) {
-      console.error('Failed to continue game:', error);
+      console.error("Failed to continue game:", error);
       this.isTransitioning = false;
     }
   }
@@ -608,10 +643,10 @@ export class MenuScene extends BaseScene {
 
     await this.animateButtonPress(this.buttons[2]);
 
-    this.eventBus.emit(GameEvent.UI_MENU_OPEN, { menuId: 'settings' });
+    this.eventBus.emit(GameEvent.UI_MENU_OPEN, { menuId: "settings" });
     this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-      message: 'Настройки будут доступны в следующей версии',
-      type: 'info',
+      message: "Настройки будут доступны в следующей версии",
+      type: "info",
     });
 
     await this.delay(500);
@@ -628,8 +663,8 @@ export class MenuScene extends BaseScene {
     await this.animateButtonPress(this.buttons[3]);
 
     this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-      message: 'SteelForce: Escape from Zone\nСоздано командой разработчиков',
-      type: 'info',
+      message: "SteelForce: Escape from Zone\nСоздано командой разработчиков",
+      type: "info",
     });
 
     await this.delay(500);
@@ -641,8 +676,8 @@ export class MenuScene extends BaseScene {
    */
   private onEscapePressed(): void {
     this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-      message: 'Нажмите Alt+F4 для выхода',
-      type: 'info',
+      message: "Нажмите Alt+F4 для выхода",
+      type: "info",
     });
   }
 
@@ -654,7 +689,7 @@ export class MenuScene extends BaseScene {
     const duration = 150;
     const startTime = Date.now();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -702,7 +737,11 @@ export class MenuScene extends BaseScene {
     this.vignette.clear();
     this.vignette.rect(0, 0, data.width, data.height);
     this.vignette.fill({ color: 0x000000, alpha: 0.3 });
-    this.vignette.circle(data.width / 2, data.height / 2, Math.min(data.width, data.height) * 0.4);
+    this.vignette.circle(
+      data.width / 2,
+      data.height / 2,
+      Math.min(data.width, data.height) * 0.4,
+    );
     this.vignette.fill({ color: 0x000000, alpha: 0 });
   }
 
@@ -712,7 +751,7 @@ export class MenuScene extends BaseScene {
   private createTween(
     target: Container,
     props: Record<string, number>,
-    duration: number
+    duration: number,
   ): Promise<void> {
     const startProps: Record<string, number> = {};
     const startTime = Date.now();
@@ -721,14 +760,15 @@ export class MenuScene extends BaseScene {
       startProps[key] = (target as any)[key];
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = this.easeOutCubic(progress);
 
         for (const key in props) {
-          (target as any)[key] = startProps[key] + (props[key] - startProps[key]) * eased;
+          (target as any)[key] =
+            startProps[key] + (props[key] - startProps[key]) * eased;
         }
 
         if (progress < 1) {
@@ -746,7 +786,7 @@ export class MenuScene extends BaseScene {
    */
   private checkSaveGame(): boolean {
     try {
-      const saveData = localStorage.getItem('steelforce_autosave');
+      const saveData = localStorage.getItem("steelforce_autosave");
       return saveData !== null;
     } catch {
       return false;
@@ -773,9 +813,9 @@ export class MenuScene extends BaseScene {
   public async cleanup(): Promise<void> {
     // Останавливаем музыку меню с затуханием
     try {
-      this.audioManager.stopCategory('music', 500);
+      this.audioManager.stopCategory("music", 500);
     } catch (error) {
-      console.warn('Failed to stop music:', error);
+      console.warn("Failed to stop music:", error);
     }
 
     // Очищаем частицы

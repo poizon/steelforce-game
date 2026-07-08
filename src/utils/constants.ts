@@ -3,8 +3,8 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
 // Название игры
-export const GAME_TITLE = 'SteelForce: Escape from Zone';
-export const GAME_VERSION = '0.1.0';
+export const GAME_TITLE = "SteelForce: Escape from Zone";
+export const GAME_VERSION = "0.1.0";
 
 // Настройки сцен
 export const DIALOG_SPEED = 30; // мс на символ
@@ -26,20 +26,20 @@ export const MUTANT_DETECTION_RADIUS = 200;
 
 // Сцены
 export const SCENES = {
-  MENU: 'menu',
-  NEWS: 'news',
-  ROOFTOP: 'rooftop',
-  PLATFORM: 'platform',
-  ELEVATOR: 'elevator',
-  ASSEMBLY: 'assembly',
-  CHEMICAL: 'chemical',
-  SOLDIERS: 'soldiers',
+  MENU: "menu",
+  NEWS: "news",
+  ROOFTOP: "rooftop",
+  PLATFORM: "platform",
+  ELEVATOR: "elevator",
+  ASSEMBLY: "assembly",
+  CHEMICAL: "chemical",
+  SOLDIERS: "soldiers",
 } as const;
 
 // Пути к ресурсам
 export const ASSET_PATHS = {
-  BACKGROUNDS: 'assets/backgrounds/',
-  SPRITES: 'assets/sprites/',
-  SOUNDS: 'assets/sounds/',
-  FONTS: 'assets/fonts/',
+  BACKGROUNDS: "assets/backgrounds/",
+  SPRITES: "assets/sprites/",
+  SOUNDS: "assets/sounds/",
+  FONTS: "assets/fonts/",
 } as const;

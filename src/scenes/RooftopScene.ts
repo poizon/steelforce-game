@@ -1,17 +1,25 @@
-import { Container, Sprite, Text, TextStyle, Graphics, BlurFilter } from 'pixi.js';
-import { BaseScene } from './BaseScene';
-import { GameEvent } from '../core/EventBus';
-import { DialogBox } from '../components/DialogBox';
-import type { SceneName } from '../core/SceneManager';
+import {
+  Container,
+  Sprite,
+  Text,
+  TextStyle,
+  Graphics,
+  BlurFilter,
+} from "pixi.js";
+
+import * as BaseScene from "./BaseScene";
+import { GameEvent } from "../core/EventBus";
+import { DialogBox } from "../components/DialogBox";
+import type { SceneName } from "../core/SceneManager";
 
 interface DialogueLine {
   speaker: string;
   text: string;
-  emotion?: 'neutral' | 'scared' | 'determined' | 'hopeful' | 'worried';
+  emotion?: "neutral" | "scared" | "determined" | "hopeful" | "worried";
   pauseAfter?: number;
 }
 
-export class RooftopScene extends BaseScene {
+export class RooftopScene extends BaseScene.BaseScene {
   // Фоновые элементы
   private background!: Sprite;
   private skyGradient!: Graphics;
@@ -48,53 +56,53 @@ export class RooftopScene extends BaseScene {
 
   // Текст радио
   private readonly radioBroadcastLines: string[] = [
-    'ВНИМАНИЕ! ЭКСТРЕННОЕ СООБЩЕНИЕ!',
-    '16 ноября в ходе эксперимента по проверке',
-    'сыворотки произошел несчастный случай..',
-    '',
-    'Погибло более двухсот человек,',
-    'остальные подверглись воздействию',
-    'вредных веществ и были...',
-    '',
-    'Армия получила приказ о нанесении',
-    'удара термическими зарядами по',
-    'поражённому городу в течении 24 часов',
-    'с целью избавления от...',
-    '',
-    'ВСЕМ ГРАЖДАНАМ НЕМЕДЛЕННО',
-    'ПОКИНУТЬ ГОРОД!',
+    "ВНИМАНИЕ! ЭКСТРЕННОЕ СООБЩЕНИЕ!",
+    "16 ноября в ходе эксперимента по проверке",
+    "сыворотки произошел несчастный случай..",
+    "",
+    "Погибло более двухсот человек,",
+    "остальные подверглись воздействию",
+    "вредных веществ и были...",
+    "",
+    "Армия получила приказ о нанесении",
+    "удара термическими зарядами по",
+    "поражённому городу в течении 24 часов",
+    "с целью избавления от...",
+    "",
+    "ВСЕМ ГРАЖДАНАМ НЕМЕДЛЕННО",
+    "ПОКИНУТЬ ГОРОД!",
   ];
 
   // Диалоги
   private readonly dialogues: DialogueLine[] = [
     {
-      speaker: 'Н',
-      text: 'Запасы заканчиваются и этот дым распространяется всё дальше..',
-      emotion: 'worried',
+      speaker: "Н",
+      text: "Запасы заканчиваются и этот дым распространяется всё дальше..",
+      emotion: "worried",
       pauseAfter: 1000,
     },
     {
-      speaker: 'М',
-      text: 'Кажется, на окраине города есть станция, от которой можно добраться до более безопасных районов.',
-      emotion: 'determined',
+      speaker: "М",
+      text: "Кажется, на окраине города есть станция, от которой можно добраться до более безопасных районов.",
+      emotion: "determined",
       pauseAfter: 1500,
     },
     {
-      speaker: 'М',
-      text: 'Возможно нам стоит попробовать туда добраться.',
-      emotion: 'hopeful',
+      speaker: "М",
+      text: "Возможно нам стоит попробовать туда добраться.",
+      emotion: "hopeful",
       pauseAfter: 2000,
     },
     {
-      speaker: 'Н',
-      text: 'Это наш единственный шанс. Нужно идти прямо сейчас, пока не стемнело.',
-      emotion: 'determined',
+      speaker: "Н",
+      text: "Это наш единственный шанс. Нужно идти прямо сейчас, пока не стемнело.",
+      emotion: "determined",
       pauseAfter: 1500,
     },
   ];
 
   protected getSceneName(): SceneName {
-    return 'rooftop';
+    return "rooftop";
   }
 
   protected async preload(): Promise<void> {
@@ -120,20 +128,20 @@ export class RooftopScene extends BaseScene {
 
   protected bindEvents(): void {
     // Пропуск диалога
-    this.eventMode = 'static';
-    this.on('pointerdown', this.onSkipDialog.bind(this));
+    this.eventMode = "static";
+    this.on("pointerdown", this.onSkipDialog.bind(this));
 
-    this.inputManager.onKeyDown(' ', (event) => {
+    this.inputManager.onKeyDown(" ", (event) => {
       event?.preventDefault();
       this.onSkipDialog();
     });
 
-    this.inputManager.onKeyDown('Enter', (event) => {
+    this.inputManager.onKeyDown("Enter", (event) => {
       event?.preventDefault();
       this.onSkipDialog();
     });
 
-    this.inputManager.onKeyDown('Escape', this.onEscape.bind(this));
+    this.inputManager.onKeyDown("Escape", this.onEscape.bind(this));
 
     // События диалога
     this.eventBus.on(GameEvent.DIALOG_END, this.onDialogEnd.bind(this));
@@ -142,8 +150,8 @@ export class RooftopScene extends BaseScene {
 
   protected async onEnter(): Promise<void> {
     // Музыка и эмбиент
-    this.audioManager.stopCategory('music', 1000);
-    this.audioManager.playAmbient('wind-ambient', {
+    this.audioManager.stopCategory("music", 1000);
+    this.audioManager.playAmbient("wind-ambient", {
       volume: 0.3,
       fadeIn: 2000,
     });
@@ -181,7 +189,7 @@ export class RooftopScene extends BaseScene {
    */
   private createBackground(): void {
     this.background = new Sprite(
-      this.assetLoader.getTexture('rooftop-background')
+      this.assetLoader.getTexture("rooftop-background"),
     );
 
     this.background.width = this.app.screen.width;
@@ -227,18 +235,30 @@ export class RooftopScene extends BaseScene {
       { x: 1050, width: 230, height: 400 },
     ];
 
-    buildingData.forEach(data => {
+    buildingData.forEach((data) => {
       const building = new Graphics();
-      building.rect(data.x, this.app.screen.height * 0.6 - data.height, data.width, data.height);
+      building.rect(
+        data.x,
+        this.app.screen.height * 0.6 - data.height,
+        data.width,
+        data.height,
+      );
       building.fill({ color: 0x0a0a0a, alpha: 0.8 });
 
       // Окна
-      for (let wy = this.app.screen.height * 0.6 - data.height + 20; wy < this.app.screen.height * 0.6 - 20; wy += 30) {
+      for (
+        let wy = this.app.screen.height * 0.6 - data.height + 20;
+        wy < this.app.screen.height * 0.6 - 20;
+        wy += 30
+      ) {
         for (let wx = data.x + 10; wx < data.x + data.width - 10; wx += 25) {
           if (Math.random() > 0.3) {
             const isLit = Math.random() > 0.5;
             building.rect(wx, wy, 10, 15);
-            building.fill({ color: isLit ? 0xffaa00 : 0x333333, alpha: isLit ? 0.6 : 0.3 });
+            building.fill({
+              color: isLit ? 0xffaa00 : 0x333333,
+              alpha: isLit ? 0.6 : 0.3,
+            });
           }
         }
       }
@@ -250,7 +270,7 @@ export class RooftopScene extends BaseScene {
     for (let i = 0; i < 5; i++) {
       const smoke = this.createSmokeParticle(
         Math.random() * this.app.screen.width,
-        this.app.screen.height * 0.3
+        this.app.screen.height * 0.3,
       );
       this.buildingsBackground.addChild(smoke);
     }
@@ -266,12 +286,22 @@ export class RooftopScene extends BaseScene {
 
     // Поверхность крыши
     const roof = new Graphics();
-    roof.rect(0, this.app.screen.height * 0.65, this.app.screen.width, this.app.screen.height * 0.35);
+    roof.rect(
+      0,
+      this.app.screen.height * 0.65,
+      this.app.screen.width,
+      this.app.screen.height * 0.35,
+    );
     roof.fill({ color: 0x2a2a2a });
 
     // Текстура крыши
     for (let i = 0; i < this.app.screen.width; i += 50) {
-      roof.rect(i, this.app.screen.height * 0.65, 2, this.app.screen.height * 0.35);
+      roof.rect(
+        i,
+        this.app.screen.height * 0.65,
+        2,
+        this.app.screen.height * 0.35,
+      );
       roof.fill({ color: 0x333333, alpha: 0.3 });
     }
 
@@ -315,17 +345,13 @@ export class RooftopScene extends BaseScene {
     this.charactersContainer.y = this.app.screen.height * 0.45;
 
     // Персонаж Н (слева)
-    this.characterN = new Sprite(
-      this.assetLoader.getTexture('character-n')
-    );
+    this.characterN = new Sprite(this.assetLoader.getTexture("character-n"));
     this.characterN.anchor.set(0.5, 1);
     this.characterN.x = this.app.screen.width * 0.35;
     this.characterN.scale.set(0.8);
 
     // Персонаж М (справа)
-    this.characterM = new Sprite(
-      this.assetLoader.getTexture('character-m')
-    );
+    this.characterM = new Sprite(this.assetLoader.getTexture("character-m"));
     this.characterM.anchor.set(0.5, 1);
     this.characterM.x = this.app.screen.width * 0.55;
     this.characterM.scale.set(0.8);
@@ -343,9 +369,7 @@ export class RooftopScene extends BaseScene {
     this.radioContainer.y = this.app.screen.height * 0.5;
 
     // Спрайт радио
-    this.radioSprite = new Sprite(
-      this.assetLoader.getTexture('radio')
-    );
+    this.radioSprite = new Sprite(this.assetLoader.getTexture("radio"));
     this.radioSprite.anchor.set(0.5);
     this.radioSprite.scale.set(0.6);
 
@@ -356,7 +380,11 @@ export class RooftopScene extends BaseScene {
     this.radioTextContainer = new Container();
     this.radioTextContainer.y = -100;
 
-    this.radioContainer.addChild(this.radioSprite, this.radioStaticEffect, this.radioTextContainer);
+    this.radioContainer.addChild(
+      this.radioSprite,
+      this.radioStaticEffect,
+      this.radioTextContainer,
+    );
     this.addChild(this.radioContainer);
   }
 
@@ -386,7 +414,7 @@ export class RooftopScene extends BaseScene {
     for (let i = 0; i < 20; i++) {
       const smoke = this.createSmokeParticle(
         Math.random() * this.app.screen.width,
-        Math.random() * this.app.screen.height
+        Math.random() * this.app.screen.height,
       );
       this.smokeParticles.push(smoke);
       this.addChild(smoke);
@@ -416,7 +444,7 @@ export class RooftopScene extends BaseScene {
   private createControlHint(): void {
     const hintContainer = new Container();
     hintContainer.alpha = 0;
-    hintContainer.name = 'controlHint';
+    hintContainer.name = "controlHint";
 
     const bg = new Graphics();
     bg.roundRect(0, 0, 600, 80, 5);
@@ -425,14 +453,14 @@ export class RooftopScene extends BaseScene {
     hintContainer.addChild(bg);
 
     const hintText = new Text({
-      text: '⚠ Опасайтесь монстров и доберитесь до станции до заката солнца',
+      text: "⚠ Опасайтесь монстров и доберитесь до станции до заката солнца",
       style: new TextStyle({
-        fontFamily: 'Press Start 2P',
+        fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xff6600,
         wordWrap: true,
         wordWrapWidth: 560,
-        align: 'center',
+        align: "center",
         lineHeight: 20,
       }),
     });
@@ -491,7 +519,7 @@ export class RooftopScene extends BaseScene {
     this.isRadioPlaying = true;
 
     // Звук помех
-    this.audioManager.playSFX('radio-static', {
+    this.audioManager.playSFX("radio-static", {
       volume: 0.3,
       loop: true,
     });
@@ -509,7 +537,7 @@ export class RooftopScene extends BaseScene {
 
     // Затухание радио
     await this.delay(2000);
-    this.audioManager.stop('radio-static', 500);
+    this.audioManager.stop("radio-static", 500);
     await this.fadeOutRadioText();
 
     this.isRadioPlaying = false;
@@ -522,16 +550,16 @@ export class RooftopScene extends BaseScene {
     const line = this.radioBroadcastLines[index];
 
     const textStyle = new TextStyle({
-      fontFamily: 'Press Start 2P',
+      fontFamily: "Press Start 2P",
       fontSize: 10,
       fill: 0x00ff00,
       wordWrap: true,
       wordWrapWidth: 200,
-      align: 'left',
+      align: "left",
     });
 
     const textObject = new Text({
-      text: line || ' ',
+      text: line || " ",
       style: textStyle,
     });
     textObject.alpha = 0;
@@ -561,29 +589,24 @@ export class RooftopScene extends BaseScene {
     this.isDialogActive = false;
     this.dialogBox.visible = false;
 
-    this.eventBus.emit(GameEvent.DIALOG_END, { dialogueId: 'rooftop_intro' });
+    this.eventBus.emit(GameEvent.DIALOG_END, { dialogueId: "rooftop_intro" });
   }
 
   /**
    * Показ одной строки диалога
    */
   private async showDialogueLine(line: DialogueLine): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       // Подсветка говорящего персонажа
       this.highlightSpeaker(line.speaker);
 
-      this.dialogBox.show(
-        line.speaker,
-        line.text,
-        line.emotion,
-        () => {
-          if (line.pauseAfter) {
-            setTimeout(resolve, line.pauseAfter);
-          } else {
-            resolve();
-          }
+      this.dialogBox.show(line.speaker, line.text, line.emotion, () => {
+        if (line.pauseAfter) {
+          setTimeout(resolve, line.pauseAfter);
+        } else {
+          resolve();
         }
-      );
+      });
     });
   }
 
@@ -596,10 +619,10 @@ export class RooftopScene extends BaseScene {
     this.characterM.alpha = 0.7;
 
     // Подсвечиваем говорящего
-    if (speaker === 'Н') {
+    if (speaker === "Н") {
       this.characterN.alpha = 1;
       this.characterN.scale.set(0.85);
-    } else if (speaker === 'М') {
+    } else if (speaker === "М") {
       this.characterM.alpha = 1;
       this.characterM.scale.set(0.85);
     }
@@ -615,13 +638,13 @@ export class RooftopScene extends BaseScene {
    * Показ подсказки управления
    */
   private async showControlHint(): Promise<void> {
-    const hint = this.getChildByName('controlHint') as Container;
+    const hint = this.getChildByName("controlHint") as Container;
     if (!hint) return;
 
     const duration = 1000;
     const startTime = Date.now();
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -650,15 +673,19 @@ export class RooftopScene extends BaseScene {
 
     // Эмитим событие смены сцены
     this.eventBus.emit(GameEvent.SCENE_CHANGE, {
-      from: 'rooftop',
-      to: 'platform',
+      from: "rooftop",
+      to: "platform",
     });
 
     // Переключаем сцену
-    this.sceneManager.switchTo('platform', {}, {
-      type: 'fade',
-      duration: 1500,
-    });
+    this.sceneManager.switchTo(
+      "platform",
+      {},
+      {
+        type: "fade",
+        duration: 1500,
+      },
+    );
   }
 
   /**
@@ -681,11 +708,11 @@ export class RooftopScene extends BaseScene {
    */
   private skipRadioBroadcast(): void {
     this.isRadioPlaying = false;
-    this.audioManager.stop('radio-static');
+    this.audioManager.stop("radio-static");
 
     // Показываем весь текст сразу
     this.radioTextLines.forEach((line, index) => {
-      line.text = this.radioBroadcastLines[index] || '';
+      line.text = this.radioBroadcastLines[index] || "";
       line.alpha = 1;
     });
 
@@ -730,7 +757,7 @@ export class RooftopScene extends BaseScene {
     const startTime = Date.now();
     const duration = 500;
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -754,7 +781,7 @@ export class RooftopScene extends BaseScene {
     const startTime = Date.now();
     const duration = 500;
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -778,7 +805,7 @@ export class RooftopScene extends BaseScene {
     const startTime = Date.now();
     const duration = 300;
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -828,9 +855,10 @@ export class RooftopScene extends BaseScene {
    * Обновление дыма
    */
   private updateSmoke(delta: number): void {
-    this.smokeParticles.forEach(particle => {
+    this.smokeParticles.forEach((particle) => {
       particle.y -= (particle as any).speed * delta * this.windIntensity;
-      particle.x += Math.sin(this.time + (particle as any).offset) * delta * 0.3;
+      particle.x +=
+        Math.sin(this.time + (particle as any).offset) * delta * 0.3;
       particle.alpha = 0.1 + Math.sin(this.time * 0.5) * 0.05;
 
       // Респавн
@@ -854,7 +882,10 @@ export class RooftopScene extends BaseScene {
       const height = Math.random() * 2 + 1;
 
       this.radioStaticEffect.rect(x, y, width, height);
-      this.radioStaticEffect.fill({ color: 0x00ff00, alpha: Math.random() * 0.3 });
+      this.radioStaticEffect.fill({
+        color: 0x00ff00,
+        alpha: Math.random() * 0.3,
+      });
     }
   }
 
@@ -876,7 +907,12 @@ export class RooftopScene extends BaseScene {
     if (this.time > 10) {
       const intensity = Math.min((this.time - 10) * 0.01, 0.3);
       this.redSkyOverlay.clear();
-      this.redSkyOverlay.rect(0, 0, this.app.screen.width, this.app.screen.height * 0.4);
+      this.redSkyOverlay.rect(
+        0,
+        0,
+        this.app.screen.width,
+        this.app.screen.height * 0.4,
+      );
       this.redSkyOverlay.fill({ color: 0xff0000, alpha: intensity });
       this.redSkyOverlay.alpha = intensity;
     }

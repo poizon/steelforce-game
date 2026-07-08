@@ -1,5 +1,5 @@
 // src/entities/MutatedWorker.ts (упрощённая версия)
-import { Container, Graphics, AnimatedSprite, Texture } from "pixi.js";
+import { Container, AnimatedSprite, Texture } from "pixi.js";
 import { EventBus } from "../core/EventBus";
 import { GameEvent } from "../core/EventBus";
 import type { Player } from "./Player";

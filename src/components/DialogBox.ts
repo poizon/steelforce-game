@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle, Sprite } from "pixi.js";
+import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { EventBus } from "../core/EventBus";
 import { GameEvent } from "../core/EventBus";
 

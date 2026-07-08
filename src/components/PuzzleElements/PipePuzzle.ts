@@ -321,7 +321,7 @@ export class PipePuzzle extends Container {
 
     const dx = to.x - from.x;
     const dy = to.y - from.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    // const distance = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx);
 
     // Смещение от центра узла
