@@ -32,11 +32,10 @@ export class NewsScene extends BaseScene {
   private isTransitioning: boolean = false;
   private textAnimationTimer: number = 0;
   private charactersToShow: number = 0;
-  // private displayedText: string = "";
 
   // Конфигурация
   private readonly typingSpeed: number = 30; // мс на символ
-  private readonly articlePause: number = 2000; // пауза между новостями
+  private readonly articlePause: number = 1000; // пауза между новостями
   private readonly textStartY: number = 150;
   private readonly textLineHeight: number = 28;
   private readonly maxLineWidth: number = 800;
@@ -136,16 +135,15 @@ export class NewsScene extends BaseScene {
 
   protected async onEnter(): Promise<void> {
     // Останавливаем музыку меню
-    this.audioManager.stopCategory("music", 1000);
+    this.audioManager.stopCategory("music");
 
     // Запускаем эмбиент
     this.audioManager.playAmbient("factory-ambient", {
       volume: 0.2,
-      fadeIn: 2000,
     });
 
     // Анимация появления
-    await this.fadeIn(1000);
+    await this.fadeIn();
     await this.animateNewspaperIn();
 
     // Начинаем показ новостей
@@ -182,7 +180,7 @@ export class NewsScene extends BaseScene {
     }
 
     // Анимация эффектов
-    this.updateEffects(delta);
+    this.updateEffects();
   }
 
   /**
@@ -408,7 +406,7 @@ export class NewsScene extends BaseScene {
     this.newspaperContainer.alpha = startAlpha;
 
     // Звук разворачивающейся газеты
-    this.audioManager.playSFX("newspaper-rustle", { volume: 0.3 });
+    this.audioManager.playSFX("newspaper-rustle", { volume: 1 });
 
     return new Promise((resolve) => {
       const animate = () => {
@@ -488,7 +486,6 @@ export class NewsScene extends BaseScene {
       this.isTyping = true;
       this.charactersToShow = 0;
       this.textAnimationTimer = 0;
-      this.displayedText = "";
 
       // Звук печати
       this.startTypingSound();
@@ -537,8 +534,7 @@ export class NewsScene extends BaseScene {
   private startTypingSound(): void {
     // Можно использовать звук печатной машинки
     this.audioManager.playAmbient("typing-sound", {
-      volume: 0.1,
-      fadeIn: 100,
+      volume: 0.9,
     });
   }
 
@@ -546,7 +542,7 @@ export class NewsScene extends BaseScene {
    * Остановка звука печати
    */
   private stopTypingSound(): void {
-    this.audioManager.stopCategory("ambient", 200);
+    this.audioManager.stopCategory("ambient");
   }
 
   /**
@@ -564,10 +560,10 @@ export class NewsScene extends BaseScene {
         this.onArticleComplete();
       }
       this.stopTypingSound();
-      this.audioManager.playSFX("click-sound", { volume: 0.3 });
+      this.audioManager.playSFX("click-sound", { volume: 0.7 });
     } else {
       // Переходим к следующей статье (если есть)
-      this.audioManager.playSFX("click-sound", { volume: 0.3 });
+      this.audioManager.playSFX("click-sound", { volume: 0.7 });
       // Автоматически перейдёт в startNewsSequence
     }
   }
@@ -624,7 +620,7 @@ export class NewsScene extends BaseScene {
    * Эффект глитча
    */
   private async triggerGlitchEffect(): Promise<void> {
-    this.audioManager.playSFX("glitch-sound", { volume: 0.5 });
+    this.audioManager.playSFX("glitch-sound", { volume: 0.7 });
 
     // Создаём несколько случайных полос
     for (let i = 0; i < 5; i++) {
@@ -697,7 +693,7 @@ export class NewsScene extends BaseScene {
    */
   public async cleanup(): Promise<void> {
     this.stopTypingSound();
-    this.audioManager.stopCategory("ambient", 500);
+    this.audioManager.stopCategory("ambient");
 
     await super.cleanup();
   }
