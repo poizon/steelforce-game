@@ -28,11 +28,11 @@ export class NewsScene extends BaseScene {
   // Состояния
   private currentArticleIndex: number = 0;
   private isTyping: boolean = false;
-  private isSkipping: boolean = false;
+  // private isSkipping: boolean = false;
   private isTransitioning: boolean = false;
   private textAnimationTimer: number = 0;
   private charactersToShow: number = 0;
-  private displayedText: string = "";
+  // private displayedText: string = "";
 
   // Конфигурация
   private readonly typingSpeed: number = 30; // мс на символ

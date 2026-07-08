@@ -226,6 +226,26 @@ class Game {
               src: "assets/sounds/dialog-click.mp3",
               loadType: "sound" as const,
             },
+            {
+              alias: "factory-ambient",
+              src: "assets/sounds/factory-ambient.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "typing-sound",
+              src: "assets/sounds/typing-sound.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "click-sound",
+              src: "assets/sounds/click-sound.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "newspaper-rustle",
+              src: "assets/sounds/newspaper-rustle.mp3",
+              loadType: "sound" as const,
+            },
           ],
         },
       ],
@@ -304,6 +324,18 @@ class Game {
       this.eventBus.emit(GameEvent.WINDOW_FOCUS, {});
     });
 
+    // Обработчик кнопки "Продолжить" из pause-menu
+    window.addEventListener("game:resume", () => {
+      if (this.sceneManager.isPaused()) {
+        this.resumeGame();
+      }
+    });
+
+    // Обработчик кнопки "Заново" из pause-menu
+    window.addEventListener("game:restart", () => {
+      this.restartGame();
+    });
+
     // Предотвращаем нежелательные действия браузера
     window.addEventListener("contextmenu", (event) => {
       event.preventDefault();
@@ -360,6 +392,9 @@ class Game {
     this.sceneManager.destroy();
     this.eventBus.offAll();
     this.audioManager.stopAll();
+
+    // Перерегистрируем сцены (они теряются после destroy)
+    this.registerScenes();
 
     // Запускаем заново
     this.startGame();

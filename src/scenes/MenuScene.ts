@@ -465,8 +465,8 @@ export class MenuScene extends BaseScene {
   /**
    * Анимация дыма
    */
-  private animateSmoke(delta: number): void {
-    console.log(delta);
+  private animateSmoke(): void {
+    // console.log(delta);
     this.smokeEffect.clear();
 
     for (let i = 0; i < 5; i++) {
@@ -483,8 +483,8 @@ export class MenuScene extends BaseScene {
   /**
    * Анимация выбранной кнопки
    */
-  private animateSelectedButton(_delta: number): void {
-    console.log(_delta);
+  private animateSelectedButton(): void {
+    // console.log(_delta);
     for (let i = 0; i < this.buttons.length; i++) {
       const button = this.buttons[i];
       const bg = button.children[0] as Graphics;
