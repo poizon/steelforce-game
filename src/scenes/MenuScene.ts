@@ -8,7 +8,7 @@ import {
 } from "pixi.js";
 import { BaseScene } from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
-import type { SceneName, SceneTransitionOptions } from "../core/SceneManager";
+import type { SceneName } from "../core/SceneManager";
 
 export class MenuScene extends BaseScene {
   // Элементы сцены
@@ -143,7 +143,9 @@ export class MenuScene extends BaseScene {
 
       this.addChild(this.background);
     } catch (error) {
-      console.warn("Failed to load menu background, using fallback");
+      console.warn(
+        `Failed to load menu background, using fallback error: ${error}`,
+      );
       // Создаём запасной фон
       const fallbackBg = new Graphics();
       fallbackBg.rect(0, 0, this.app.screen.width, this.app.screen.height);
@@ -213,7 +215,9 @@ export class MenuScene extends BaseScene {
       this.addChild(this.logo);
     } catch (error) {
       // Если логотип не загружен, создаём текстовый заголовок
-      console.warn("Logo texture not found, using text fallback");
+      console.warn(
+        `Logo texture not found, using text fallback error: ${error}`,
+      );
       this.logo = new Sprite(); // Пустой спрайт как заглушка
     }
   }
@@ -462,6 +466,7 @@ export class MenuScene extends BaseScene {
    * Анимация дыма
    */
   private animateSmoke(delta: number): void {
+    console.log(delta);
     this.smokeEffect.clear();
 
     for (let i = 0; i < 5; i++) {
@@ -479,6 +484,7 @@ export class MenuScene extends BaseScene {
    * Анимация выбранной кнопки
    */
   private animateSelectedButton(_delta: number): void {
+    console.log(_delta);
     for (let i = 0; i < this.buttons.length; i++) {
       const button = this.buttons[i];
       const bg = button.children[0] as Graphics;

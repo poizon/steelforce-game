@@ -761,7 +761,7 @@ export class PipePuzzle extends Container {
   private createMoveCounter(): void {
     const counter = new Container();
     counter.position.set(580, 400);
-    counter.name = "moveCounter";
+    counter.label = "moveCounter";
 
     const bg = new Graphics();
     bg.roundRect(0, 0, 180, 40, 5);
@@ -778,7 +778,7 @@ export class PipePuzzle extends Container {
       }),
     });
     text.position.set(15, 12);
-    text.name = "moveText";
+    text.label = "moveText";
     counter.addChild(text);
 
     this.addChild(counter);
@@ -916,10 +916,10 @@ export class PipePuzzle extends Container {
    * Обновление счётчика ходов
    */
   private updateMoveCounter(): void {
-    const counter = this.getChildByName("moveCounter") as Container;
+    const counter = this.getChildByLabel("moveCounter") as Container;
     if (!counter) return;
 
-    const text = counter.getChildByName("moveText") as Text;
+    const text = counter.getChildByLabel("moveText") as Text;
     if (!text) return;
 
     text.text = `Ходы: ${this.moveCount}/${this.maxMoves}`;
@@ -936,7 +936,7 @@ export class PipePuzzle extends Container {
   /**
    * Обработчик клика
    */
-  private onClick(event: any): void {
+  private onClick(): void {
     // Обработка кликов по трубам происходит в их собственных обработчиках
   }
 

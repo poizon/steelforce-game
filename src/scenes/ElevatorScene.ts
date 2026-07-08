@@ -1,17 +1,9 @@
-import {
-  Container,
-  Sprite,
-  Graphics,
-  Text,
-  TextStyle,
-  AnimatedSprite,
-} from "pixi.js";
+import * as pixiJs from "pixi.js";
 import { BaseScene } from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import { Player } from "../entities/Player";
 import { DialogBox } from "../components/DialogBox";
 import type { SceneName } from "../core/SceneManager";
-import type { Vector2 } from "../types";
 
 interface ElevatorState {
   position: number; // 0-1, где 0 - верх, 1 - низ
@@ -27,7 +19,7 @@ interface Container_ {
   width: number;
   height: number;
   type: "metal" | "wood" | "hanging" | "falling";
-  graphics: Graphics;
+  graphics: pixiJs.Graphics;
   velocity: { x: number; y: number };
   isFalling: boolean;
   fallTimer: number;
@@ -36,7 +28,7 @@ interface Container_ {
 }
 
 interface ChainLink {
-  graphics: Graphics;
+  graphics: pixiJs.Graphics;
   attached: boolean;
   targetContainer?: Container_;
 }
@@ -46,32 +38,32 @@ export class ElevatorScene extends BaseScene {
   private player!: Player;
 
   // Лифт
-  private elevatorContainer!: Container;
-  private elevatorPlatform!: Graphics;
-  private elevatorCage!: Graphics;
+  private elevatorContainer!: pixiJs.Container;
+  private elevatorPlatform!: pixiJs.Graphics;
+  private elevatorCage!: pixiJs.Graphics;
   private elevatorState: ElevatorState;
   private chainLinks: ChainLink[] = [];
 
   // Контейнеры для прыжков
   private containers: Container_[] = [];
-  private containerGraphics: Container;
+  private containerGraphics: pixiJs.Container;
 
   // Окружение
-  private background!: Container;
-  private shaftWalls!: Graphics;
-  private platformLedges: Graphics[] = [];
+  private background!: pixiJs.Container;
+  private shaftWalls!: pixiJs.Graphics;
+  private platformLedges: pixiJs.Graphics[] = [];
 
   // Эффекты
-  private dustParticles: Graphics[] = [];
-  private sparks: Graphics[] = [];
-  private warningLight!: Graphics;
-  private alarmText!: Text;
+  private dustParticles: pixiJs.Graphics[] = [];
+  private sparks: pixiJs.Graphics[] = [];
+  private warningLight!: pixiJs.Graphics;
+  private alarmText!: pixiJs.Text;
 
   // HUD
-  private hudContainer!: Container;
-  private heightText!: Text;
-  private objectiveText!: Text;
-  private warningText!: Text;
+  private hudContainer!: pixiJs.Container;
+  private heightText!: pixiJs.Text;
+  private objectiveText!: pixiJs.Text;
+  private warningText!: pixiJs.Text;
 
   // Диалог
   private dialogBox!: DialogBox;
@@ -110,7 +102,7 @@ export class ElevatorScene extends BaseScene {
       targetPosition: 0.3,
     };
 
-    this.containerGraphics = new Container();
+    this.containerGraphics = new pixiJs.Container();
   }
 
   protected async preload(): Promise<void> {
@@ -215,10 +207,10 @@ export class ElevatorScene extends BaseScene {
    * Создание фона
    */
   private createBackground(): void {
-    this.background = new Container();
+    this.background = new pixiJs.Container();
 
     // Тёмный фон шахты
-    const bg = new Graphics();
+    const bg = new pixiJs.Graphics();
     bg.rect(0, 0, 800, 720);
     bg.fill({ color: 0x0a0a0a });
 
@@ -242,7 +234,7 @@ export class ElevatorScene extends BaseScene {
    */
   private createShaft(): void {
     // Стены шахты
-    this.shaftWalls = new Graphics();
+    this.shaftWalls = new pixiJs.Graphics();
 
     // Левая стена
     this.shaftWalls.rect(this.shaftLeft, 0, 10, 720);
@@ -279,7 +271,7 @@ export class ElevatorScene extends BaseScene {
     ];
 
     ledgeData.forEach((data) => {
-      const ledge = new Graphics();
+      const ledge = new pixiJs.Graphics();
       ledge.rect(data.x, data.y, data.width, 10);
       ledge.fill({ color: 0x555555 });
       ledge.stroke({ width: 1, color: 0x777777 });
@@ -292,10 +284,10 @@ export class ElevatorScene extends BaseScene {
    * Создание лифта
    */
   private createElevator(): void {
-    this.elevatorContainer = new Container();
+    this.elevatorContainer = new pixiJs.Container();
 
     // Платформа лифта
-    this.elevatorPlatform = new Graphics();
+    this.elevatorPlatform = new pixiJs.Graphics();
     this.elevatorPlatform.rect(0, 0, 370, 15);
     this.elevatorPlatform.fill({ color: 0x666666 });
     this.elevatorPlatform.stroke({ width: 2, color: 0x888888 });
@@ -307,7 +299,7 @@ export class ElevatorScene extends BaseScene {
     }
 
     // Клетка лифта
-    this.elevatorCage = new Graphics();
+    this.elevatorCage = new pixiJs.Graphics();
 
     // Задняя стенка
     this.elevatorCage.rect(0, -200, 370, 200);
@@ -335,16 +327,16 @@ export class ElevatorScene extends BaseScene {
     this.createChains();
 
     // Предупреждающая лампа
-    this.warningLight = new Graphics();
+    this.warningLight = new pixiJs.Graphics();
     this.warningLight.circle(0, 0, 15);
     this.warningLight.fill({ color: 0xff0000, alpha: 0.5 });
     this.warningLight.position.set(this.shaftLeft + 185, 80);
     this.addChild(this.warningLight);
 
     // Текст тревоги
-    this.alarmText = new Text({
+    this.alarmText = new pixiJs.Text({
       text: "⚠ ЛИФТ НЕИСПРАВЕН ⚠",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0xff0000,
@@ -368,7 +360,7 @@ export class ElevatorScene extends BaseScene {
 
     attachmentPoints.forEach((x) => {
       for (let i = 0; i < 5; i++) {
-        const link = new Graphics();
+        const link = new pixiJs.Graphics();
         link.rect(-3, -8, 6, 16);
         link.fill({ color: 0x888888 });
         link.stroke({ width: 1, color: 0x999999 });
@@ -434,7 +426,7 @@ export class ElevatorScene extends BaseScene {
     ];
 
     containerData.forEach((data) => {
-      const graphics = new Graphics();
+      const graphics = new pixiJs.Graphics();
 
       switch (data.type) {
         case "metal":
@@ -520,7 +512,7 @@ export class ElevatorScene extends BaseScene {
   private createEffects(): void {
     // Частицы пыли
     for (let i = 0; i < 30; i++) {
-      const particle = new Graphics();
+      const particle = new pixiJs.Graphics();
       particle.circle(0, 0, Math.random() * 2 + 1);
       particle.fill({ color: 0x888888, alpha: 0.3 });
       particle.position.set(
@@ -533,7 +525,7 @@ export class ElevatorScene extends BaseScene {
 
     // Искры
     for (let i = 0; i < 10; i++) {
-      const spark = new Graphics();
+      const spark = new pixiJs.Graphics();
       spark.circle(0, 0, 2);
       spark.fill({ color: 0xffaa00, alpha: 0.8 });
       spark.position.set(
@@ -549,12 +541,12 @@ export class ElevatorScene extends BaseScene {
    * Создание HUD
    */
   private createHUD(): void {
-    this.hudContainer = new Container();
+    this.hudContainer = new pixiJs.Container();
 
     // Высота
-    this.heightText = new Text({
+    this.heightText = new pixiJs.Text({
       text: "Глубина: 0м",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xffffff,
@@ -563,9 +555,9 @@ export class ElevatorScene extends BaseScene {
     this.heightText.position.set(20, 20);
 
     // Цель
-    this.objectiveText = new Text({
+    this.objectiveText = new pixiJs.Text({
       text: "Поднимитесь наверх по контейнерам",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x888888,
@@ -574,9 +566,9 @@ export class ElevatorScene extends BaseScene {
     this.objectiveText.position.set(20, 45);
 
     // Предупреждение
-    this.warningText = new Text({
+    this.warningText = new pixiJs.Text({
       text: "",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 16,
         fill: 0xff0000,
@@ -821,6 +813,7 @@ export class ElevatorScene extends BaseScene {
    * Обновление цепей
    */
   private updateChains(delta: number): void {
+    console.log(delta);
     this.chainLinks.forEach((link, index) => {
       if (link.attached) {
         // Лёгкое покачивание цепей
@@ -862,6 +855,7 @@ export class ElevatorScene extends BaseScene {
    * Обновление тряски экрана
    */
   private updateShake(delta: number): void {
+    console.log(delta);
     if (this.shakeIntensity > 0) {
       this.shakeIntensity *= 0.95;
 

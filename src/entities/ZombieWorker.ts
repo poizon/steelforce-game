@@ -1,11 +1,4 @@
-import {
-  Container,
-  Sprite,
-  AnimatedSprite,
-  Graphics,
-  Text,
-  Texture,
-} from "pixi.js";
+import { Container, AnimatedSprite, Graphics, Texture } from "pixi.js";
 import { EventBus } from "../core/EventBus";
 import { GameEvent } from "../core/EventBus";
 import type { Player } from "./Player";
@@ -560,6 +553,7 @@ export class ZombieWorker extends Container {
    * Поведение при оглушении
    */
   private updateStunnedBehavior(delta: number): void {
+    console.log(delta);
     // Лёгкое покачивание
     this.x += Math.sin(Date.now() * 0.01) * 0.3;
     this.sprite.rotation = Math.sin(Date.now() * 0.02) * 0.1;
@@ -599,7 +593,7 @@ export class ZombieWorker extends Container {
    */
   private updateAnimation(delta: number): void {
     let targetTextures: Texture[];
-
+    console.log(delta);
     switch (this.state) {
       case "idle":
         targetTextures = this.idleTextures;
@@ -749,6 +743,7 @@ export class ZombieWorker extends Container {
    * Получение урона
    */
   public takeDamage(amount: number, source?: string): void {
+    console.log(source);
     if (!this._isAlive) return;
 
     this.currentHealth -= amount;

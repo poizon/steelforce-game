@@ -1,11 +1,4 @@
-import {
-  Container,
-  Sprite,
-  Text,
-  TextStyle,
-  Graphics,
-  BlurFilter,
-} from "pixi.js";
+import { Container, Sprite, Text, TextStyle, Graphics } from "pixi.js";
 
 import * as BaseScene from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
@@ -484,8 +477,8 @@ export class RooftopScene extends BaseScene.BaseScene {
     particle.fill({ color: 0x444444, alpha: 0.3 });
     particle.x = x;
     particle.y = y;
-    (particle as any).speed = Math.random() * 0.5 + 0.2;
-    (particle as any).offset = Math.random() * Math.PI * 2;
+    // particle.speed = Math.random() * 0.5 + 0.2;
+    // particle.offset = Math.random() * Math.PI * 2;
     return particle;
   }
 
@@ -829,7 +822,7 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.windIntensity = 0.3 + Math.sin(this.time * 0.5) * 0.2;
 
     // Анимация линий ветра
-    this.windLines.forEach((line, index) => {
+    this.windLines.forEach((line) => {
       if (Math.random() < 0.02) {
         line.clear();
         const y = Math.random() * this.app.screen.height;
@@ -856,9 +849,8 @@ export class RooftopScene extends BaseScene.BaseScene {
    */
   private updateSmoke(delta: number): void {
     this.smokeParticles.forEach((particle) => {
-      particle.y -= (particle as any).speed * delta * this.windIntensity;
-      particle.x +=
-        Math.sin(this.time + (particle as any).offset) * delta * 0.3;
+      particle.y -= delta * this.windIntensity;
+      particle.x += Math.sin(this.time) * delta * 0.3;
       particle.alpha = 0.1 + Math.sin(this.time * 0.5) * 0.05;
 
       // Респавн
@@ -872,7 +864,7 @@ export class RooftopScene extends BaseScene.BaseScene {
   /**
    * Обновление помех радио
    */
-  private updateRadioStatic(delta: number): void {
+  private updateRadioStatic(): void {
     this.radioStaticEffect.clear();
 
     for (let i = 0; i < 5; i++) {
@@ -892,7 +884,7 @@ export class RooftopScene extends BaseScene.BaseScene {
   /**
    * Обновление персонажей
    */
-  private updateCharacters(delta: number): void {
+  private updateCharacters(): void {
     // Лёгкое дыхание
     const breath = Math.sin(this.time * 0.5) * 0.02;
     this.characterN.scale.y = 0.8 + breath;
@@ -902,7 +894,7 @@ export class RooftopScene extends BaseScene.BaseScene {
   /**
    * Обновление красного неба (предвещает опасность)
    */
-  private updateRedSky(delta: number): void {
+  private updateRedSky(): void {
     // Постепенно усиливаем красный оттенок
     if (this.time > 10) {
       const intensity = Math.min((this.time - 10) * 0.01, 0.3);

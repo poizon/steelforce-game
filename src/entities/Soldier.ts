@@ -83,6 +83,7 @@ export class Soldier extends pixiJs.Container {
   }
 
   public update(_delta: number): void {
+    console.log(_delta);
     // Простая анимация дыхания
     this.graphics.y = Math.sin(Date.now() * 0.003) * 0.5;
   }

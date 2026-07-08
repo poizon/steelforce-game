@@ -1,12 +1,5 @@
-import {
-  Container,
-  Sprite,
-  Graphics,
-  Text,
-  TextStyle,
-  AnimatedSprite,
-} from "pixi.js";
-import { BaseScene } from "./BaseScene";
+import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import * as BaseScene from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import { Player } from "../entities/Player";
 import { ZombieWorker } from "../entities/ZombieWorker";
@@ -33,7 +26,7 @@ interface Crusher {
   graphics: Graphics;
 }
 
-export class AssemblyScene extends BaseScene {
+export class AssemblyScene extends BaseScene.BaseScene {
   // Игрок
   private player!: Player;
 
@@ -303,34 +296,38 @@ export class AssemblyScene extends BaseScene {
 
     // Детали в зависимости от типа
     switch (type) {
-      case "press":
+      case "press": {
         const press = new Graphics();
         press.rect(10, height - 20, width - 20, 15);
         press.fill({ color: 0xff0000 });
         machine.addChild(press);
         break;
+      }
 
-      case "welder":
+      case "welder": {
         const welder = new Graphics();
         welder.circle(width / 2, 10, 8);
         welder.fill({ color: 0x00ffff, alpha: 0.8 });
         machine.addChild(welder);
         break;
+      }
 
-      case "cutter":
+      case "cutter": {
         const blade = new Graphics();
         blade.moveTo(10, 0);
         blade.lineTo(20, height);
         blade.stroke({ width: 3, color: 0xcccccc });
         machine.addChild(blade);
         break;
+      }
 
-      case "assembler":
+      case "assembler": {
         const arm = new Graphics();
         arm.rect(width / 2 - 5, 0, 10, height / 2);
         arm.fill({ color: 0xffaa00 });
         machine.addChild(arm);
         break;
+      }
     }
 
     // Индикатор
@@ -809,7 +806,7 @@ export class AssemblyScene extends BaseScene {
   /**
    * Обновление конвейеров
    */
-  private updateConveyors(delta: number): void {
+  private updateConveyors(): void {
     this.conveyors.forEach((conveyor) => {
       // Анимация движения
       const time = Date.now() * 0.001;

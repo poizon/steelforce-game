@@ -667,7 +667,7 @@ export class NewsScene extends BaseScene {
   /**
    * Обновление визуальных эффектов
    */
-  private updateEffects(delta: number): void {
+  private updateEffects(): void {
     // Обновление шума
     if (Math.random() < 0.1) {
       this.noiseOverlay.clear();

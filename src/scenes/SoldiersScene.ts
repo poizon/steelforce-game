@@ -4,31 +4,30 @@ import {
   Graphics,
   Text,
   TextStyle,
-  AnimatedSprite,
+  PointData,
 } from "pixi.js";
 import * as BaseScene from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import { Player } from "../entities/Player";
 import { Soldier } from "../entities/Soldier";
-import { DialogBox } from "../components/DialogBox";
+import { DialogBox, type Emotion } from "../components/DialogBox";
 import type { SceneName } from "../core/SceneManager";
-import type { Vector2 } from "../types";
 
 interface QuestItem {
   id: string;
   name: string;
   description: string;
-  location: Vector2;
+  location: PointData;
   found: boolean;
   delivered: boolean;
   sprite?: Sprite;
 }
 
-interface DialogOption {
-  text: string;
-  action: () => void;
-  condition?: () => boolean;
-}
+// interface DialogOption {
+//   text: string;
+//   action: () => void;
+//   condition?: () => boolean;
+// }
 
 export class SoldiersScene extends BaseScene.BaseScene {
   // Игрок
@@ -37,7 +36,7 @@ export class SoldiersScene extends BaseScene.BaseScene {
   // Солдаты
   private soldiers: Soldier[] = [];
   private soldierLeader!: Soldier;
-  private soldierPositions: Vector2[] = [];
+  private soldierPositions: PointData[] = [];
 
   // Диалог
   private dialogBox!: DialogBox;
@@ -957,9 +956,14 @@ export class SoldiersScene extends BaseScene.BaseScene {
     emotion?: string;
   }): Promise<void> {
     return new Promise((resolve) => {
-      this.dialogBox.show(line.speaker, line.text, line.emotion as any, () => {
-        setTimeout(resolve, 500);
-      });
+      this.dialogBox.show(
+        line.speaker,
+        line.text,
+        (line.emotion as Emotion) || "neutral",
+        () => {
+          setTimeout(resolve, 500);
+        },
+      );
     });
   }
 
@@ -1362,7 +1366,7 @@ export class SoldiersScene extends BaseScene.BaseScene {
    */
   private updateHUD(): void {
     switch (this.gamePhase) {
-      case "search":
+      case "search": {
         this.objectiveText.text =
           "Найдите и принесите требуемые предметы солдатам";
         const remainingTime = Math.floor(
@@ -1372,6 +1376,7 @@ export class SoldiersScene extends BaseScene.BaseScene {
         const seconds = remainingTime % 60;
         this.objectiveText.text += `\nВремя: ${minutes}:${seconds.toString().padStart(2, "0")}`;
         break;
+      }
 
       case "delivery":
         this.objectiveText.text = "Передайте предметы сержанту";

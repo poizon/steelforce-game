@@ -98,8 +98,8 @@ export interface GameEventData {
   [GameEvent.GAME_PAUSE]: { reason?: string };
   [GameEvent.GAME_RESUME]: { timestamp: number };
   [GameEvent.GAME_OVER]: { reason: string; score?: number };
-  [GameEvent.GAME_RESTART]: {};
-  [GameEvent.GAME_QUIT]: {};
+  [GameEvent.GAME_RESTART]: Record<string, never>;
+  [GameEvent.GAME_QUIT]: Record<string, never>;
 
   [GameEvent.SCENE_LOADING]: { scene: string; progress: number };
   [GameEvent.SCENE_READY]: { scene: string };
@@ -136,12 +136,12 @@ export interface GameEventData {
   [GameEvent.AUDIO_PLAY_PAUSED]: { alias: string; id: string };
   [GameEvent.AUDIO_PLAY_RESUMED]: { alias: string; id: string };
   [GameEvent.AUDIO_PLAY_COMPLETED]: { alias: string; id: string };
-  [GameEvent.AUDIO_ALL_PAUSED]: {};
-  [GameEvent.AUDIO_ALL_RESUMED]: {};
-  [GameEvent.AUDIO_MUTED]: {};
-  [GameEvent.AUDIO_UNMUTED]: {};
+  [GameEvent.AUDIO_ALL_PAUSED]: Record<string, never>;
+  [GameEvent.AUDIO_ALL_RESUMED]: Record<string, never>;
+  [GameEvent.AUDIO_MUTED]: Record<string, never>;
+  [GameEvent.AUDIO_UNMUTED]: Record<string, never>;
   [GameEvent.AUDIO_VOLUME_CHANGED]: { volume: number };
-  [GameEvent.AUDIO_CONTEXT_INITIALIZED]: {};
+  [GameEvent.AUDIO_CONTEXT_INITIALIZED]: Record<string, never>;
 
   [GameEvent.PLAYER_SPAWN]: { position: { x: number; y: number } };
   [GameEvent.PLAYER_MOVE]: {
@@ -209,8 +209,8 @@ export interface GameEventData {
   };
 
   [GameEvent.WINDOW_RESIZE]: { width: number; height: number };
-  [GameEvent.WINDOW_FOCUS]: {};
-  [GameEvent.WINDOW_BLUR]: {};
+  [GameEvent.WINDOW_FOCUS]: Record<string, never>;
+  [GameEvent.WINDOW_BLUR]: Record<string, never>;
 }
 
 /**
@@ -483,11 +483,14 @@ export class EventBus {
   public pipe(
     sourceEvent: GameEvent,
     targetEvent: GameEvent,
-    transform?: (data: any) => any,
+    transform?: (data: unknown) => unknown,
   ): () => void {
-    return this.on(sourceEvent, (data: any) => {
+    return this.on(sourceEvent, (data: unknown) => {
       const transformedData = transform ? transform(data) : data;
-      this.emit(targetEvent, transformedData);
+      this.emit(
+        targetEvent,
+        transformedData as GameEventData[typeof targetEvent],
+      );
     });
   }
 
@@ -578,7 +581,7 @@ export class EventBus {
    */
   public getActiveEvents(): GameEvent[] {
     return Array.from(this.listeners.entries())
-      .filter(([_, listeners]) => listeners.length > 0)
+      .filter(([, listeners]) => listeners.length > 0)
       .map(([event]) => event);
   }
 
@@ -624,7 +627,7 @@ export class EventBus {
    * Генерирует уникальный id для подписки
    */
   private generateSubscriptionId(event: GameEvent): string {
-    return `${event}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `${event}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**

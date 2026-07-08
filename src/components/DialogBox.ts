@@ -583,7 +583,7 @@ export class DialogBox extends Container {
   /**
    * Обновление пульсации иконки эмоции
    */
-  private updateEmotionPulse(delta: number): void {
+  private updateEmotionPulse(): void {
     if (!this.emotionIcon.visible) return;
 
     const circle = this.emotionIcon.children[1] as Graphics;
@@ -597,7 +597,7 @@ export class DialogBox extends Container {
   /**
    * Обновление эффекта тряски
    */
-  private updateShake(delta: number): void {
+  private updateShake(): void {
     this.shakeIntensity *= 0.9;
 
     if (this.shakeIntensity < 0.01) {

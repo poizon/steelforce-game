@@ -1,4 +1,4 @@
-import { Container, Sprite, Graphics, Text, TextStyle } from "pixi.js";
+import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { BaseScene } from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import { Player } from "../entities/Player";
@@ -102,7 +102,7 @@ export class PlatformScene extends BaseScene {
 
     // События игрока
     this.eventBus.on(GameEvent.PLAYER_DEATH, this.onPlayerDeath.bind(this));
-    this.eventBus.on(GameEvent.PLAYER_DAMAGE, this.onPlayerDamage.bind(this));
+    // this.eventBus.on(GameEvent.PLAYER_DAMAGE, this.onPlayerDamage.bind(this));
   }
 
   protected async onEnter(): Promise<void> {
@@ -942,12 +942,12 @@ export class PlatformScene extends BaseScene {
   /**
    * Обработчик урона игроку
    */
-  private onPlayerDamage(data: {
-    amount: number;
-    currentHealth: number;
-  }): void {
-    // Обновление HUD или эффектов
-  }
+  // private onPlayerDamage(data: {
+  //   amount: number;
+  //   currentHealth: number;
+  // }): void {
+  //   // Обновление HUD или эффектов
+  // }
 
   /**
    * Обработчик Escape

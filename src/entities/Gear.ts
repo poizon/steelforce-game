@@ -160,7 +160,6 @@ export class Gear extends pixiJs.Container {
     const teethCount = this.gearType === "large" ? 12 : 8;
     const innerRadius = size * 0.5;
     const outerRadius = size * 0.8;
-    const teethHeight = size * 0.3;
 
     // Рисуем зубья
     for (let i = 0; i < teethCount; i++) {
@@ -384,7 +383,7 @@ export class Gear extends pixiJs.Container {
    * Обновление искр
    */
   private updateSparkles(delta: number): void {
-    this.sparkles.forEach((sparkle, index) => {
+    this.sparkles.forEach((sparkle) => {
       if (sparkle.visible) {
         sparkle.alpha -= delta * 0.005;
         sparkle.scale.set(sparkle.scale.x + delta * 0.001);

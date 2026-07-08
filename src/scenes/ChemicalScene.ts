@@ -1,11 +1,4 @@
-import {
-  Container,
-  Sprite,
-  Graphics,
-  Text,
-  TextStyle,
-  AnimatedSprite,
-} from "pixi.js";
+import * as pixiJs from "pixi.js";
 import { BaseScene } from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import { Player } from "../entities/Player";
@@ -23,20 +16,20 @@ interface GasVent {
   timer: number;
   interval: number;
   duration: number;
-  graphics: Graphics;
+  graphics: pixiJs.Graphics;
 }
 
-interface ChemicalPipe {
-  id: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  isBlocked: boolean;
-  isSelected: boolean;
-  color: number;
-  graphics: Graphics;
-}
+// interface ChemicalPipe {
+//   id: string;
+//   startX: number;
+//   startY: number;
+//   endX: number;
+//   endY: number;
+//   isBlocked: boolean;
+//   isSelected: boolean;
+//   color: number;
+//   graphics: pixiJs.Graphics;
+// }
 
 interface PuzzleNode {
   id: string;
@@ -58,11 +51,11 @@ export class ChemicalScene extends BaseScene {
   private mutantSpawnInterval: number = 360; // кадры
 
   // Окружение
-  private background!: Container;
-  private pipeNetwork!: Container;
-  private chemicalTanks: Container[] = [];
+  private background!: pixiJs.Container;
+  private pipeNetwork!: pixiJs.Container;
+  private chemicalTanks: pixiJs.Container[] = [];
   private gasVents: GasVent[] = [];
-  private warningLights: Graphics[] = [];
+  private warningLights: pixiJs.Graphics[] = [];
 
   // Головоломка с трубами
   private pipePuzzle!: PipePuzzle;
@@ -71,20 +64,20 @@ export class ChemicalScene extends BaseScene {
   private isPuzzleComplete: boolean = false;
 
   // Химические эффекты
-  private gasClouds: Graphics[] = [];
-  private chemicalSpills: Graphics[] = [];
-  private toxicFog!: Graphics;
-  private acidDroplets: Graphics[] = [];
+  private gasClouds: pixiJs.Graphics[] = [];
+  private chemicalSpills: pixiJs.Graphics[] = [];
+  private toxicFog!: pixiJs.Graphics;
+  private acidDroplets: pixiJs.Graphics[] = [];
 
   // HUD
-  private hudContainer!: Container;
-  private puzzleHint!: Text;
-  private objectiveText!: Text;
-  private dangerIndicator!: Container;
-  private gasMaskIndicator!: Container;
+  private hudContainer!: pixiJs.Container;
+  private puzzleHint!: pixiJs.Text;
+  private objectiveText!: pixiJs.Text;
+  private dangerIndicator!: pixiJs.Container;
+  private gasMaskIndicator!: pixiJs.Container;
 
   // Миникарта схемы
-  private minimapContainer!: Container;
+  private minimapContainer!: pixiJs.Container;
   private minimapVisible: boolean = false;
 
   // Состояния
@@ -229,15 +222,15 @@ export class ChemicalScene extends BaseScene {
    * Создание фона
    */
   private createBackground(): void {
-    this.background = new Container();
+    this.background = new pixiJs.Container();
 
     // Тёмный фон цеха
-    const bg = new Graphics();
+    const bg = new pixiJs.Graphics();
     bg.rect(0, 0, this.levelWidth, this.levelHeight);
     bg.fill({ color: 0x0a1a0a });
 
     // Стены с пятнами химикатов
-    const walls = new Graphics();
+    const walls = new pixiJs.Graphics();
     for (let x = 0; x < this.levelWidth; x += 50) {
       const wallColor = Math.random() > 0.8 ? 0x1a2a1a : 0x1a1a1a;
       walls.rect(x, 0, 50, 20);
@@ -248,7 +241,7 @@ export class ChemicalScene extends BaseScene {
 
     // Химические подтёки на стенах
     for (let i = 0; i < 15; i++) {
-      const stain = new Graphics();
+      const stain = new pixiJs.Graphics();
       const x = Math.random() * this.levelWidth;
       const y = Math.random() > 0.5 ? 15 : this.levelHeight - 25;
       stain.rect(x, y, Math.random() * 10 + 3, Math.random() * 20 + 10);
@@ -267,7 +260,7 @@ export class ChemicalScene extends BaseScene {
    * Создание сети труб
    */
   private createPipeNetwork(): void {
-    this.pipeNetwork = new Container();
+    this.pipeNetwork = new pixiJs.Container();
 
     // Горизонтальные трубы
     const horizontalPipes = [
@@ -311,7 +304,7 @@ export class ChemicalScene extends BaseScene {
    * Создание горизонтальной трубы
    */
   private createHorizontalPipe(x: number, y: number, width: number): void {
-    const pipe = new Graphics();
+    const pipe = new pixiJs.Graphics();
 
     // Основная труба
     pipe.rect(x, y - 8, width, 16);
@@ -341,7 +334,7 @@ export class ChemicalScene extends BaseScene {
    * Создание вертикальной трубы
    */
   private createVerticalPipe(x: number, y: number, height: number): void {
-    const pipe = new Graphics();
+    const pipe = new pixiJs.Graphics();
 
     pipe.rect(x - 8, y, 16, height);
     pipe.fill({ color: 0x556655 });
@@ -364,7 +357,7 @@ export class ChemicalScene extends BaseScene {
     ];
 
     valvePositions.forEach((pos, index) => {
-      const valve = new Graphics();
+      const valve = new pixiJs.Graphics();
 
       // Корпус вентиля
       valve.circle(0, 0, 12);
@@ -397,7 +390,7 @@ export class ChemicalScene extends BaseScene {
   /**
    * Переключение вентиля
    */
-  private toggleValve(valveId: string, valve: Graphics): void {
+  private toggleValve(valveId: string, valve: pixiJs.Graphics): void {
     const currentState = this.valvePositions.get(valveId) || false;
     this.valvePositions.set(valveId, !currentState);
 
@@ -405,7 +398,7 @@ export class ChemicalScene extends BaseScene {
     valve.rotation = currentState ? 0 : Math.PI / 2;
 
     // Обновление индикатора
-    const indicator = valve.children[2] as Graphics;
+    const indicator = valve.children[2] as pixiJs.Graphics;
     if (indicator) {
       indicator.clear();
       indicator.circle(0, 0, 4);
@@ -447,12 +440,12 @@ export class ChemicalScene extends BaseScene {
     y: number,
     width: number,
     height: number,
-  ): Container {
-    const tank = new Container();
+  ): pixiJs.Container {
+    const tank = new pixiJs.Container();
     tank.position.set(x, y);
 
     // Корпус
-    const body = new Graphics();
+    const body = new pixiJs.Graphics();
     body.roundRect(0, 0, width, height, 10);
     body.fill({ color: 0x334433 });
     body.stroke({ width: 3, color: 0x556655 });
@@ -460,7 +453,7 @@ export class ChemicalScene extends BaseScene {
 
     // Уровень жидкости
     const liquidLevel = 0.3 + Math.random() * 0.5;
-    const liquid = new Graphics();
+    const liquid = new pixiJs.Graphics();
     liquid.roundRect(
       5,
       height * (1 - liquidLevel),
@@ -472,13 +465,13 @@ export class ChemicalScene extends BaseScene {
     tank.addChild(liquid);
 
     // Трубы сверху
-    const topPipe = new Graphics();
+    const topPipe = new pixiJs.Graphics();
     topPipe.rect(width / 2 - 5, -20, 10, 20);
     topPipe.fill({ color: 0x556655 });
     tank.addChild(topPipe);
 
     // Индикатор давления
-    const gauge = new Graphics();
+    const gauge = new pixiJs.Graphics();
     gauge.circle(width - 15, 15, 10);
     gauge.fill({ color: 0x222222 });
     gauge.stroke({ width: 1, color: 0x666666 });
@@ -491,7 +484,7 @@ export class ChemicalScene extends BaseScene {
     tank.addChild(gauge);
 
     // Предупреждающие метки
-    const warningStripe = new Graphics();
+    const warningStripe = new pixiJs.Graphics();
     for (let i = 0; i < height; i += 15) {
       if (i % 30 < 15) {
         warningStripe.rect(width - 3, i, 3, 15);
@@ -526,7 +519,7 @@ export class ChemicalScene extends BaseScene {
    * Создание газового вента
    */
   private createGasVent(x: number, y: number): GasVent {
-    const graphics = new Graphics();
+    const graphics = new pixiJs.Graphics();
 
     // Решётка вента
     graphics.rect(-15, -5, 30, 10);
@@ -564,7 +557,7 @@ export class ChemicalScene extends BaseScene {
   private createWarningSystem(): void {
     // Лампы предупреждения
     for (let i = 0; i < 8; i++) {
-      const light = new Graphics();
+      const light = new pixiJs.Graphics();
       light.circle(0, 0, 8);
       light.fill({ color: 0xff0000, alpha: 0.3 });
       light.position.set(100 + i * 350, 30);
@@ -578,7 +571,7 @@ export class ChemicalScene extends BaseScene {
    */
   private createChemicalSpills(): void {
     for (let i = 0; i < 10; i++) {
-      const spill = new Graphics();
+      const spill = new pixiJs.Graphics();
       const radius = Math.random() * 30 + 10;
       spill.circle(0, 0, radius);
       spill.fill({ color: 0x88ff00, alpha: 0.2 });
@@ -607,20 +600,20 @@ export class ChemicalScene extends BaseScene {
   /**
    * Создание индикатора противогаза
    */
-  private createGasMaskIndicator(): Container {
-    const container = new Container();
+  private createGasMaskIndicator(): pixiJs.Container {
+    const container = new pixiJs.Container();
     container.position.set(1000, 50);
     container.visible = false;
 
-    const icon = new Graphics();
+    const icon = new pixiJs.Graphics();
     icon.roundRect(0, 0, 200, 30, 5);
     icon.fill({ color: 0x000000, alpha: 0.7 });
     icon.stroke({ width: 1, color: 0x00ff00 });
     container.addChild(icon);
 
-    const text = new Text({
+    const text = new pixiJs.Text({
       text: "Противогаз: 100%",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x00ff00,
@@ -709,7 +702,7 @@ export class ChemicalScene extends BaseScene {
    */
   private createEffects(): void {
     // Токсичный туман
-    this.toxicFog = new Graphics();
+    this.toxicFog = new pixiJs.Graphics();
     this.toxicFog.rect(0, 0, this.levelWidth, this.levelHeight);
     this.toxicFog.fill({ color: 0x88ff00, alpha: 0.05 });
     this.addChild(this.toxicFog);
@@ -732,8 +725,8 @@ export class ChemicalScene extends BaseScene {
   /**
    * Создание газового облака
    */
-  private createGasCloud(): Graphics {
-    const cloud = new Graphics();
+  private createGasCloud(): pixiJs.Graphics {
+    const cloud = new pixiJs.Graphics();
     const radius = Math.random() * 40 + 20;
 
     for (let i = 0; i < 5; i++) {
@@ -755,8 +748,8 @@ export class ChemicalScene extends BaseScene {
   /**
    * Создание капли кислоты
    */
-  private createAcidDroplet(): Graphics {
-    const droplet = new Graphics();
+  private createAcidDroplet(): pixiJs.Graphics {
+    const droplet = new pixiJs.Graphics();
     droplet.ellipse(0, 0, 2, 3);
     droplet.fill({ color: 0x88ff00, alpha: 0.8 });
     droplet.position.set(Math.random() * this.levelWidth, Math.random() * 100);
@@ -767,12 +760,12 @@ export class ChemicalScene extends BaseScene {
    * Создание HUD
    */
   private createHUD(): void {
-    this.hudContainer = new Container();
+    this.hudContainer = new pixiJs.Container();
 
     // Цель
-    this.objectiveText = new Text({
+    this.objectiveText = new pixiJs.Text({
       text: "Настройте систему труб и доберитесь до выхода",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0xff6600,
@@ -783,9 +776,9 @@ export class ChemicalScene extends BaseScene {
     this.objectiveText.position.set(20, 20);
 
     // Подсказка головоломки
-    this.puzzleHint = new Text({
+    this.puzzleHint = new pixiJs.Text({
       text: "Нажмите Tab для просмотра схемы",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 10,
         fill: 0x888888,
@@ -808,18 +801,18 @@ export class ChemicalScene extends BaseScene {
   /**
    * Создание индикатора опасности
    */
-  private createDangerIndicator(): Container {
-    const container = new Container();
+  private createDangerIndicator(): pixiJs.Container {
+    const container = new pixiJs.Container();
 
-    const bg = new Graphics();
+    const bg = new pixiJs.Graphics();
     bg.roundRect(0, 0, 150, 40, 5);
     bg.fill({ color: 0x000000, alpha: 0.7 });
     bg.stroke({ width: 1, color: 0x666666 });
     container.addChild(bg);
 
-    const icon = new Text({
+    const icon = new pixiJs.Text({
       text: "⚠",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontSize: 20,
         fill: 0xffff00,
       }),
@@ -827,9 +820,9 @@ export class ChemicalScene extends BaseScene {
     icon.position.set(10, 5);
     container.addChild(icon);
 
-    const text = new Text({
+    const text = new pixiJs.Text({
       text: "Токсичность: 0%",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 8,
         fill: 0xffff00,
@@ -846,21 +839,21 @@ export class ChemicalScene extends BaseScene {
    * Создание миникарты
    */
   private createMinimap(): void {
-    this.minimapContainer = new Container();
+    this.minimapContainer = new pixiJs.Container();
     this.minimapContainer.position.set(800, 100);
     this.minimapContainer.visible = false;
 
     // Фон
-    const bg = new Graphics();
+    const bg = new pixiJs.Graphics();
     bg.roundRect(0, 0, 400, 300, 10);
     bg.fill({ color: 0x000000, alpha: 0.9 });
     bg.stroke({ width: 2, color: 0x00ff00 });
     this.minimapContainer.addChild(bg);
 
     // Заголовок
-    const title = new Text({
+    const title = new pixiJs.Text({
       text: "СХЕМА ТРУБОПРОВОДА",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 12,
         fill: 0x00ff00,
@@ -964,7 +957,7 @@ export class ChemicalScene extends BaseScene {
     const playerPos = this.player.getPosition();
 
     // Поиск ближайшего вентиля
-    for (const [valveId, _] of this.valvePositions) {
+    for (const [valveId] of this.valvePositions) {
       const valveIndex = parseInt(valveId.split("_")[1]);
       const valvePos = {
         x: [300, 600, 300, 800, 1000, 700][valveIndex],
@@ -977,7 +970,9 @@ export class ChemicalScene extends BaseScene {
       );
 
       if (distance < 50) {
-        const valve = this.pipeNetwork.children[3 + valveIndex] as Graphics;
+        const valve = this.pipeNetwork.children[
+          3 + valveIndex
+        ] as pixiJs.Graphics;
         this.toggleValve(valveId, valve);
         break;
       }
@@ -1111,7 +1106,7 @@ export class ChemicalScene extends BaseScene {
     // Анализируем позиции вентилей и определяем, какие венты активны
     let activeVentCount = 0;
 
-    for (const [valveId, isOpen] of this.valvePositions) {
+    for (const [, isOpen] of this.valvePositions) {
       if (isOpen) activeVentCount++;
     }
 
@@ -1400,7 +1395,7 @@ export class ChemicalScene extends BaseScene {
   /**
    * Проверка столкновения
    */
-  private isColliding(a: Container, b: Container): boolean {
+  private isColliding(a: pixiJs.Container, b: pixiJs.Container): boolean {
     const boundsA = a.getBounds();
     const boundsB = b.getBounds();
 
@@ -1419,7 +1414,7 @@ export class ChemicalScene extends BaseScene {
     // Обновление индикатора токсичности
     const toxicityText = this.dangerIndicator.getChildByLabel(
       "toxicityText",
-    ) as Text;
+    ) as pixiJs.Text;
     if (toxicityText) {
       toxicityText.text = `Токсичность: ${Math.floor(this.toxicLevel)}%`;
 
@@ -1439,7 +1434,7 @@ export class ChemicalScene extends BaseScene {
       this.gasMaskIndicator.visible = true;
       const maskText = this.gasMaskIndicator.getChildByLabel(
         "maskText",
-      ) as Text;
+      ) as pixiJs.Text;
       if (maskText) {
         maskText.text = `Противогаз: ${Math.floor(this.gasMaskDurability)}%`;
       }
@@ -1467,7 +1462,7 @@ export class ChemicalScene extends BaseScene {
 
     // Рисуем узлы
     this.puzzleNodes.forEach((node) => {
-      const nodeGraphic = new Graphics();
+      const nodeGraphic = new pixiJs.Graphics();
       const x = offsetX + node.x * scale;
       const y = offsetY + node.y * scale;
 
@@ -1503,7 +1498,7 @@ export class ChemicalScene extends BaseScene {
         const endX = offsetX + connNode.x * scale;
         const endY = offsetY + connNode.y * scale;
 
-        const line = new Graphics();
+        const line = new pixiJs.Graphics();
         line.moveTo(startX, startY);
         line.lineTo(endX, endY);
         line.stroke({ width: 2, color: 0x444444 });
@@ -1552,9 +1547,9 @@ export class ChemicalScene extends BaseScene {
    * Показ сообщения
    */
   private showMessage(text: string, color: number = 0xffffff): void {
-    const message = new Text({
+    const message = new pixiJs.Text({
       text,
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 14,
         fill: color,
@@ -1576,9 +1571,9 @@ export class ChemicalScene extends BaseScene {
   private onPlayerDeath(): void {
     this.audioManager.playSFX("death-sound", { volume: 0.7 });
 
-    const deathText = new Text({
+    const deathText = new pixiJs.Text({
       text: "ВЫ ПОГИБЛИ",
-      style: new TextStyle({
+      style: new pixiJs.TextStyle({
         fontFamily: "Press Start 2P",
         fontSize: 32,
         fill: 0x88ff00,

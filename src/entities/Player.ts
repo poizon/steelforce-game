@@ -280,7 +280,7 @@ export class Player extends pixiJs.Container {
   /**
    * Обновление анимации
    */
-  private updateAnimation(delta: number): void {
+  private updateAnimation(): void {
     let targetTextures: pixiJs.Texture[];
 
     switch (this.state) {

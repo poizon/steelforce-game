@@ -279,7 +279,7 @@ class Game {
     }
   }
 
-  private update(deltaTime: number, _elapsedMs: number): void {
+  private update(deltaTime: number): void {
     this.inputManager.update();
     this.sceneManager.update(deltaTime);
   }

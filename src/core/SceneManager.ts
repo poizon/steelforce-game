@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application } from "pixi.js";
 import { EventBus } from "./EventBus";
 import { InputManager } from "./InputManager";
 import { AudioManager } from "./AudioManager";

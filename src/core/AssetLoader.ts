@@ -231,15 +231,23 @@ export class AssetLoader {
       const audio = new Audio();
       audio.src = asset.src;
       audio.preload = "auto";
-      
-      audio.addEventListener('canplaythrough', () => {
-        resolve(audio);
-      }, { once: true });
-      
-      audio.addEventListener('error', (e) => {
-        reject(new Error(`Failed to load sound: ${asset.src}`));
-      }, { once: true });
-      
+
+      audio.addEventListener(
+        "canplaythrough",
+        () => {
+          resolve(audio);
+        },
+        { once: true },
+      );
+
+      audio.addEventListener(
+        "error",
+        () => {
+          reject(new Error(`Failed to load sound: ${asset.src}`));
+        },
+        { once: true },
+      );
+
       // Timeout на случай если событие не сработает
       setTimeout(() => {
         if (audio.readyState >= 3) {
@@ -248,7 +256,7 @@ export class AssetLoader {
           reject(new Error(`Timeout loading sound: ${asset.src}`));
         }
       }, 10000);
-      
+
       audio.load();
     });
   }
@@ -442,7 +450,8 @@ export class AssetLoader {
     // Находим все ресурсы бандла и выгружаем их
     for (const [alias, asset] of this.loadedAssets.entries()) {
       if (asset && typeof asset === "object" && "bundleName" in asset) {
-        if ((asset as any).bundleName === bundleName) {
+        const item = asset as { bundleName?: string };
+        if (item.bundleName === bundleName) {
           this.unload(alias);
         }
       }
@@ -455,7 +464,7 @@ export class AssetLoader {
    * Выгружает все ресурсы
    */
   public unloadAll(): void {
-    for (const [alias, asset] of this.loadedAssets.entries()) {
+    for (const [, asset] of this.loadedAssets.entries()) {
       if (asset instanceof Texture) {
         asset.destroy(true);
       }

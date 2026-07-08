@@ -104,7 +104,7 @@ export class MutatedWorker extends Container {
     }
   }
 
-  public takeDamage(amount: number, source?: string): void {
+  public takeDamage(amount: number): void {
     if (!this._isAlive) return;
 
     this.health -= amount;
