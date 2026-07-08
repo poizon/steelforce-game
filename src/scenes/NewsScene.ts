@@ -21,7 +21,6 @@ export class NewsScene extends BaseScene {
   private vignette!: Graphics;
   private glitchEffect!: Graphics;
 
-  private currentArticleIndex: number = 0;
   private isTyping: boolean = false;
   private isTransitioning: boolean = false;
   private currentArticleResolve: (() => void) | null = null;
@@ -297,7 +296,6 @@ export class NewsScene extends BaseScene {
   private async startNewsSequence(): Promise<void> {
     for (let i = 0; i < this.newsArticles.length; i++) {
       if (this.isTransitioning) break;
-      this.currentArticleIndex = i;
       const article = this.newsArticles[i];
       if (article.delay) {
         await this.delay(article.delay);
