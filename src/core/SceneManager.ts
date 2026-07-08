@@ -97,6 +97,7 @@ export class SceneManager {
     params: Record<string, unknown> = {},
     transition: SceneTransitionOptions = {},
   ): Promise<void> {
+    console.log(`Switching to scene "${name}"`, params, transition);
     if (this.isTransitioning) {
       console.warn("Scene transition already in progress");
       return;
