@@ -437,7 +437,7 @@ export class RooftopScene extends BaseScene.BaseScene {
   private createControlHint(): void {
     const hintContainer = new Container();
     hintContainer.alpha = 0;
-    hintContainer.name = "controlHint";
+    hintContainer.label = "controlHint";
 
     const bg = new Graphics();
     bg.roundRect(0, 0, 600, 80, 5);
@@ -631,7 +631,7 @@ export class RooftopScene extends BaseScene.BaseScene {
    * Показ подсказки управления
    */
   private async showControlHint(): Promise<void> {
-    const hint = this.getChildByName("controlHint") as Container;
+    const hint = this.getChildByLabel("controlHint") as Container;
     if (!hint) return;
 
     const duration = 1000;

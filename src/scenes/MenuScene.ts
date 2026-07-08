@@ -9,6 +9,7 @@ import {
 import { BaseScene } from "./BaseScene";
 import { GameEvent } from "../core/EventBus";
 import type { SceneName } from "../core/SceneManager";
+import { Notification } from "../components/Notification";
 
 export class MenuScene extends BaseScene {
   // Элементы сцены
@@ -31,6 +32,8 @@ export class MenuScene extends BaseScene {
   private logoFloatOffset: number = 0;
   private time: number = 0;
   private hasSaveGame: boolean = false;
+
+  protected notification!: Notification;
 
   protected getSceneName(): SceneName {
     return "menu";
@@ -61,6 +64,12 @@ export class MenuScene extends BaseScene {
 
     // Начальное состояние
     this.alpha = 0;
+
+    // Создаём компонент уведомлений
+    this.notification = new Notification();
+    this.notification.x = this.app.screen.width / 2;
+    this.notification.y = this.app.screen.height / 2;
+    this.addChild(this.notification);
   }
 
   protected bindEvents(): void {
@@ -641,40 +650,75 @@ export class MenuScene extends BaseScene {
   /**
    * Обработчик кнопки "Настройки"
    */
+  // private async onSettings(): Promise<void> {
+  //   if (this.isTransitioning) return;
+  //   this.isTransitioning = true;
+
+  //   await this.animateButtonPress(this.buttons[2]);
+
+  //   this.eventBus.emit(GameEvent.UI_MENU_OPEN, { menuId: "settings" });
+  //   this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
+  //     message: "Настройки будут доступны в следующей версии",
+  //     type: "info",
+  //   });
+
+  //   await this.delay(500);
+  //   this.isTransitioning = false;
+  // }
+
+  // /**
+  //  * Обработчик кнопки "Авторы"
+  //  */
+  // private async onCredits(): Promise<void> {
+  //   if (this.isTransitioning) return;
+  //   this.isTransitioning = true;
+
+  //   await this.animateButtonPress(this.buttons[3]);
+
+  //   this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
+  //     message:
+  //       "",
+  //     type: "info",
+  //   });
+
+  //   await this.delay(500);
+  //   this.isTransitioning = false;
+  // }
+
   private async onSettings(): Promise<void> {
     if (this.isTransitioning) return;
     this.isTransitioning = true;
 
     await this.animateButtonPress(this.buttons[2]);
 
-    this.eventBus.emit(GameEvent.UI_MENU_OPEN, { menuId: "settings" });
-    this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-      message: "Настройки будут доступны в следующей версии",
+    // Показываем уведомление
+    this.notification.show({
+      message: "Настройки будут доступны\nв следующей версии",
       type: "info",
+      duration: 3000,
     });
 
     await this.delay(500);
     this.isTransitioning = false;
   }
 
-  /**
-   * Обработчик кнопки "Авторы"
-   */
   private async onCredits(): Promise<void> {
     if (this.isTransitioning) return;
     this.isTransitioning = true;
 
     await this.animateButtonPress(this.buttons[3]);
 
-    this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-      message: "SteelForce: Escape from Zone\nСоздано командой разработчиков",
-      type: "info",
+    // Показываем уведомление об авторах
+    this.notification.show({
+      message:
+        "SteelForce: Escape from Zone\nСоздано Qweasd && PoizOn Game studio\n\n© 2026",
+      type: "success",
+      duration: 4000,
     });
 
     await this.delay(500);
     this.isTransitioning = false;
   }
-
   /**
    * Обработчик клавиши Escape
    */

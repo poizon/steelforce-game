@@ -88,6 +88,10 @@ export abstract class BaseScene extends Container {
     // Переопределяется при необходимости
   }
 
+  /**
+   * Устанавливает уведомления
+   */
+
   protected unbindEvents(): void {
     // Переопределяется при необходимости
   }

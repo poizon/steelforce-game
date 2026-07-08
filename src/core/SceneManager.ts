@@ -1,5 +1,5 @@
 import { Application } from "pixi.js";
-import { EventBus } from "./EventBus";
+import { EventBus, GameEvent } from "./EventBus";
 import { InputManager } from "./InputManager";
 import { AudioManager } from "./AudioManager";
 import { AssetLoader } from "./AssetLoader";
@@ -21,14 +21,7 @@ export interface SceneTransitionOptions {
   direction?: "left" | "right" | "up" | "down";
 }
 
-export interface SceneParams {
-  fromScene?: SceneName;
-  inventory?: Record<string, unknown>;
-  playerPosition?: { x: number; y: number };
-  puzzleState?: Record<string, unknown>;
-  dialogueState?: string[];
-  customData?: Record<string, unknown>;
-}
+export type SceneParams = Record<string, unknown>;
 
 type SceneConstructor = new (
   app: Application,
@@ -47,13 +40,10 @@ export class SceneManager {
 
   private readonly scenes: Map<SceneName, SceneConstructor> = new Map();
   private currentScene: BaseScene | null = null;
-  private nextScene: BaseScene | null = null;
 
   private isTransitioning: boolean = false;
   private isGamePaused: boolean = false;
-  private transitionTimer: number = 0;
   private transitionDuration: number = 1000;
-  private transitionType: SceneTransitionOptions["type"] = "fade";
 
   private readonly sceneHistory: Array<{
     name: SceneName;
@@ -78,9 +68,6 @@ export class SceneManager {
     this.setupGlobalListeners();
   }
 
-  /**
-   * Регистрирует конструктор сцены
-   */
   public register(name: SceneName, sceneClass: SceneConstructor): void {
     if (this.scenes.has(name)) {
       console.warn(`Scene "${name}" is already registered. Overwriting...`);
@@ -89,17 +76,15 @@ export class SceneManager {
     console.log(`Scene "${name}" registered successfully`);
   }
 
-  /**
-   * Переключает на указанную сцену
-   */
   public async switchTo(
     name: SceneName,
-    params: Record<string, unknown> = {},
+    params: SceneParams = {},
     transition: SceneTransitionOptions = {},
   ): Promise<void> {
-    console.log(`Switching to scene "${name}"`, params, transition);
+    console.log(`[SceneManager] Switching to scene "${name}"`);
+
     if (this.isTransitioning) {
-      console.warn("Scene transition already in progress");
+      console.warn("[SceneManager] Scene transition already in progress");
       return;
     }
 
@@ -115,10 +100,10 @@ export class SceneManager {
         this.addToHistory(this.currentScene.name, this.currentScene.params);
       }
 
-      this.eventBus.emit("scene:transition:start", {
+      this.eventBus.emit(GameEvent.SCENE_TRANSITION_START, {
         from: this.currentScene?.name,
         to: name,
-        params,
+        type: transition.type || "fade",
       });
 
       const newScene = new SceneClass(
@@ -129,8 +114,14 @@ export class SceneManager {
         this.assetLoader,
       );
 
-      // ВАЖНО: Устанавливаем ссылку на SceneManager
-      newScene.setSceneManager(this);
+      // Устанавливаем ссылку на SceneManager
+      // Используем type assertion для вызова setSceneManager если он существует
+      const sceneWithManager = newScene as BaseScene & {
+        setSceneManager?: (manager: SceneManager) => void;
+      };
+      if (sceneWithManager.setSceneManager) {
+        sceneWithManager.setSceneManager(this);
+      }
 
       await newScene.init(params);
       await this.performTransition(newScene, transition);
@@ -142,22 +133,25 @@ export class SceneManager {
       }
 
       this.currentScene = newScene;
-      this.nextScene = null;
       this.app.stage.addChild(this.currentScene);
       await this.currentScene.enter();
 
-      this.eventBus.emit("scene:transition:end", {
+      this.eventBus.emit(GameEvent.SCENE_TRANSITION_END, {
         scene: name,
-        params,
       });
+
+      console.log(`[SceneManager] Successfully switched to "${name}"`);
     } catch (error) {
-      console.error(`Failed to switch to scene "${name}":`, error);
+      console.error(
+        `[SceneManager] Failed to switch to scene "${name}":`,
+        error,
+      );
 
       if (this.currentScene) {
         this.app.stage.addChild(this.currentScene);
       }
 
-      this.eventBus.emit("scene:transition:error", {
+      this.eventBus.emit(GameEvent.SCENE_TRANSITION_ERROR, {
         scene: name,
         error: error instanceof Error ? error : new Error(String(error)),
       });
@@ -166,9 +160,6 @@ export class SceneManager {
     }
   }
 
-  /**
-   * Выполняет анимацию перехода между сценами
-   */
   private async performTransition(
     newScene: BaseScene,
     options: SceneTransitionOptions,
@@ -196,16 +187,12 @@ export class SceneManager {
     }
   }
 
-  /**
-   * Переход с затуханием
-   */
   private async fadeTransition(
     newScene: BaseScene,
     duration: number,
   ): Promise<void> {
     if (!this.currentScene) return;
 
-    // Устанавливаем начальную прозрачность новой сцены
     newScene.alpha = 0;
     this.app.stage.addChild(newScene);
 
@@ -215,8 +202,6 @@ export class SceneManager {
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Применяем easing
         const easedProgress = this.easeInOutQuad(progress);
 
         if (this.currentScene) {
@@ -227,7 +212,6 @@ export class SceneManager {
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
-          // Убираем новую сцену (она будет добавлена после уничтожения старой)
           this.app.stage.removeChild(newScene);
           resolve();
         }
@@ -237,9 +221,6 @@ export class SceneManager {
     });
   }
 
-  /**
-   * Переход со сдвигом
-   */
   private async slideTransition(
     newScene: BaseScene,
     duration: number,
@@ -249,7 +230,6 @@ export class SceneManager {
 
     const { width, height } = this.app.screen;
 
-    // Устанавливаем начальную позицию новой сцены
     switch (direction) {
       case "right":
         newScene.x = width;
@@ -320,12 +300,9 @@ export class SceneManager {
     });
   }
 
-  /**
-   * Возвращается к предыдущей сцене
-   */
   public async goBack(params: SceneParams = {}): Promise<void> {
     if (this.sceneHistory.length === 0) {
-      console.warn("No previous scene in history");
+      console.warn("[SceneManager] No previous scene in history");
       return;
     }
 
@@ -336,148 +313,94 @@ export class SceneManager {
     });
   }
 
-  /**
-   * Добавляет сцену в историю
-   */
   private addToHistory(name: SceneName, params: SceneParams): void {
     this.sceneHistory.push({ name, params });
 
-    // Ограничиваем размер истории
     if (this.sceneHistory.length > this.maxHistorySize) {
       this.sceneHistory.shift();
     }
   }
 
-  /**
-   * Обновляет текущую сцену
-   */
   public update(delta: number): void {
     if (this.isGamePaused || this.isTransitioning) return;
-
     this.currentScene?.update(delta);
   }
 
-  /**
-   * Ставит игру на паузу
-   */
   public pause(): void {
     if (this.isGamePaused) return;
 
     this.isGamePaused = true;
     this.currentScene?.onPause();
-    this.eventBus.emit("game:paused");
+    this.eventBus.emit(GameEvent.GAME_PAUSE, { reason: "manual" });
   }
 
-  /**
-   * Снимает игру с паузы
-   */
   public resume(): void {
     if (!this.isGamePaused) return;
 
     this.isGamePaused = false;
     this.currentScene?.onResume();
-    this.eventBus.emit("game:resumed");
+    this.eventBus.emit(GameEvent.GAME_RESUME, { timestamp: Date.now() });
   }
 
-  /**
-   * Проверяет, на паузе ли игра
-   */
   public isPaused(): boolean {
     return this.isGamePaused;
   }
 
-  /**
-   * Получает текущую сцену
-   */
   public getCurrentScene(): BaseScene | null {
     return this.currentScene;
   }
 
-  /**
-   * Получает имя текущей сцены
-   */
   public getCurrentSceneName(): SceneName | null {
     return this.currentScene?.name || null;
   }
 
-  /**
-   * Проверяет, зарегистрирована ли сцена
-   */
   public hasScene(name: SceneName): boolean {
     return this.scenes.has(name);
   }
 
-  /**
-   * Получает список зарегистрированных сцен
-   */
   public getRegisteredScenes(): SceneName[] {
     return Array.from(this.scenes.keys());
   }
 
-  /**
-   * Очищает историю сцен
-   */
   public clearHistory(): void {
     this.sceneHistory.length = 0;
   }
 
-  /**
-   * Устанавливает длительность перехода по умолчанию
-   */
   public setDefaultTransitionDuration(duration: number): void {
     this.transitionDuration = duration;
   }
 
-  /**
-   * Устанавливает тип перехода по умолчанию
-   */
-  public setDefaultTransitionType(type: SceneTransitionOptions["type"]): void {
-    this.transitionType = type;
-  }
-
-  /**
-   * Настройка глобальных слушателей
-   */
   private setupGlobalListeners(): void {
-    // Слушаем команды навигации
     this.eventBus.on(
-      "scene:go",
-      (data: { scene: SceneName; params?: SceneParams }) => {
-        this.switchTo(data.scene, data.params);
+      GameEvent.SCENE_CHANGE,
+      (data: { to: string; from?: string }) => {
+        this.switchTo(data.to as SceneName);
       },
     );
 
-    this.eventBus.on("scene:back", (params?: SceneParams) => {
-      this.goBack(params);
-    });
-
     // Автосохранение при смене сцены
-    this.eventBus.on("scene:transition:end", (data: { scene: SceneName }) => {
-      this.autoSave(data.scene);
-    });
+    this.eventBus.on(
+      GameEvent.SCENE_TRANSITION_END,
+      (data: { scene: string }) => {
+        this.autoSave(data.scene as SceneName);
+      },
+    );
   }
 
-  /**
-   * Автосохранение прогресса
-   */
   private autoSave(currentScene: SceneName): void {
     try {
       const saveData = {
         currentScene,
         timestamp: Date.now(),
         sceneHistory: this.sceneHistory.map((h) => h.name),
-        // Здесь можно добавить другие данные для сохранения
       };
 
       localStorage.setItem("steelforce_autosave", JSON.stringify(saveData));
     } catch (error) {
-      console.warn("Failed to autosave:", error);
+      console.warn("[SceneManager] Failed to autosave:", error);
     }
   }
 
-  /**
-   * Загружает сохранение
-   */
   public async loadSave(): Promise<boolean> {
     try {
       const saveData = localStorage.getItem("steelforce_autosave");
@@ -492,48 +415,29 @@ export class SceneManager {
 
       return false;
     } catch (error) {
-      console.error("Failed to load save:", error);
+      console.error("[SceneManager] Failed to load save:", error);
       return false;
     }
   }
 
-  /**
-   * Функция плавности для анимаций
-   */
   private easeInOutQuad(t: number): number {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
   }
 
-  /**
-   * Уничтожает менеджер сцен и все активные сцены
-   */
   public destroy(): void {
-    // Очищаем текущую сцену
     if (this.currentScene) {
-      this.currentScene.cleanup();
+      this.currentScene.cleanup().catch(console.error);
       this.app.stage.removeChild(this.currentScene);
       this.currentScene.destroy({ children: true });
       this.currentScene = null;
     }
 
-    // Очищаем nextScene если есть
-    if (this.nextScene) {
-      this.nextScene.destroy({ children: true });
-      this.nextScene = null;
-    }
-
-    // Очищаем историю и зарегистрированные сцены
     this.sceneHistory.length = 0;
     this.scenes.clear();
-
-    // Сбрасываем состояние
     this.isTransitioning = false;
     this.isGamePaused = false;
   }
 
-  /**
-   * Для отладки: логирует состояние менеджера сцен
-   */
   public debug(): void {
     console.group("SceneManager Debug");
     console.log("Current scene:", this.currentScene?.name);
