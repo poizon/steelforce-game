@@ -61,13 +61,17 @@ export class AudioManager {
 
   private getAudio(alias: string): HTMLAudioElement | null {
     if (!this.loader) return null;
-    
+
     try {
       const sound = this.loader.get(alias);
       if (sound instanceof HTMLAudioElement) {
         return sound;
       }
-      if (typeof sound === "object" && sound !== null && "htmlElement" in sound) {
+      if (
+        typeof sound === "object" &&
+        sound !== null &&
+        "htmlElement" in sound
+      ) {
         const elem = (sound as { htmlElement?: HTMLAudioElement }).htmlElement;
         if (elem instanceof HTMLAudioElement) {
           return elem;
@@ -82,12 +86,14 @@ export class AudioManager {
   private calculateVolume(config: AudioConfig): number {
     if (this.isMuted) return 0;
     const category = config.category || "sfx";
-    return this.masterVolume * this.categoryVolume[category] * (config.volume ?? 1.0);
+    return (
+      this.masterVolume * this.categoryVolume[category] * (config.volume ?? 1.0)
+    );
   }
 
   play(alias: string, config: Partial<AudioConfig> = {}): number | null {
     this.initAudioContext();
-    
+
     const audio = this.getAudio(alias);
     if (!audio) return null;
 
@@ -117,20 +123,35 @@ export class AudioManager {
 
   playMusic(alias: string, config: Partial<AudioConfig> = {}): number | null {
     this.stopCategory("music");
-    return this.play(alias, { loop: true, volume: 0.7, category: "music", ...config });
+    return this.play(alias, {
+      loop: true,
+      volume: 0.7,
+      category: "music",
+      ...config,
+    });
   }
 
   playSFX(alias: string, config: Partial<AudioConfig> = {}): number | null {
-    return this.play(alias, { loop: false, volume: 1.0, category: "sfx", ...config });
+    return this.play(alias, {
+      loop: false,
+      volume: 1.0,
+      category: "sfx",
+      ...config,
+    });
   }
 
   playAmbient(alias: string, config: Partial<AudioConfig> = {}): number | null {
-    return this.play(alias, { loop: true, volume: 0.5, category: "ambient", ...config });
+    return this.play(alias, {
+      loop: true,
+      volume: 0.5,
+      category: "ambient",
+      ...config,
+    });
   }
 
   stop(idOrAlias: string | number): void {
     let sound: ActiveSound | undefined;
-    
+
     // Ищем по id или alias
     if (typeof idOrAlias === "number") {
       sound = this.activeSounds.get(idOrAlias);
@@ -216,6 +237,11 @@ export class AudioManager {
   }
 
   debug(): void {
-    console.log("AudioManager: volume=", this.masterVolume, "muted=", this.isMuted);
+    console.log(
+      "AudioManager: volume=",
+      this.masterVolume,
+      "muted=",
+      this.isMuted,
+    );
   }
 }
