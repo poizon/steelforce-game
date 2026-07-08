@@ -226,24 +226,31 @@ export class AssetLoader {
   /**
    * Загружает звуковой файл
    */
-  private async loadSound(asset: AssetDefinition): Promise<Sound> {
-    const sound = await Assets.load({
-      src: asset.src,
-      loadParser: "loadSound",
-      ...asset.data,
+  private async loadSound(asset: AssetDefinition): Promise<HTMLAudioElement> {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.src = asset.src;
+      audio.preload = "auto";
+      
+      audio.addEventListener('canplaythrough', () => {
+        resolve(audio);
+      }, { once: true });
+      
+      audio.addEventListener('error', (e) => {
+        reject(new Error(`Failed to load sound: ${asset.src}`));
+      }, { once: true });
+      
+      // Timeout на случай если событие не сработает
+      setTimeout(() => {
+        if (audio.readyState >= 3) {
+          resolve(audio);
+        } else {
+          reject(new Error(`Timeout loading sound: ${asset.src}`));
+        }
+      }, 10000);
+      
+      audio.load();
     });
-
-    if (!sound) {
-      throw new Error(`Failed to load sound: ${asset.src}`);
-    }
-
-    // Предзагружаем аудио для быстрого воспроизведения
-    if (sound instanceof HTMLAudioElement) {
-      sound.preload = "auto";
-      sound.load();
-    }
-
-    return sound;
   }
 
   /**

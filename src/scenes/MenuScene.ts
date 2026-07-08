@@ -312,9 +312,7 @@ export class MenuScene extends BaseScene {
 
       button.on("pointerdown", () => {
         if (!config.disabled && !this.isTransitioning) {
-          this.audioManager
-            .playSFX("dialog-click", { volume: 0.5 })
-            .catch(() => {});
+          this.audioManager.playSFX("dialog-click", { volume: 0.5 });
           config.action();
         }
       });

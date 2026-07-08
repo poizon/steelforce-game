@@ -193,17 +193,41 @@ class Game {
         //     { alias: 'soldier', src: 'assets/sprites/soldier.png' },
         //   ],
         // },
-        // {
-        //   name: 'audio',
-        //   assets: [
-        //     { alias: 'menu-music', src: 'assets/sounds/menu-music.mp3', loadType: 'sound' as const },
-        //     { alias: 'gameplay-music', src: 'assets/sounds/gameplay-music.mp3', loadType: 'sound' as const },
-        //     { alias: 'radio-broadcast', src: 'assets/sounds/radio-broadcast.mp3', loadType: 'sound' as const },
-        //     { alias: 'zombie-growl', src: 'assets/sounds/zombie-growl.mp3', loadType: 'sound' as const },
-        //     { alias: 'gear-collect', src: 'assets/sounds/gear-collect.mp3', loadType: 'sound' as const },
-        //     { alias: 'dialog-click', src: 'assets/sounds/dialog-click.mp3', loadType: 'sound' as const },
-        //   ],
-        // },
+        {
+          name: "audio",
+          assets: [
+            {
+              alias: "menu-music",
+              src: "assets/sounds/menu-music.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "gameplay-music",
+              src: "assets/sounds/gameplay-music.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "radio-broadcast",
+              src: "assets/sounds/radio-broadcast.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "zombie-growl",
+              src: "assets/sounds/zombie-growl.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "gear-collect",
+              src: "assets/sounds/gear-collect.mp3",
+              loadType: "sound" as const,
+            },
+            {
+              alias: "dialog-click",
+              src: "assets/sounds/dialog-click.mp3",
+              loadType: "sound" as const,
+            },
+          ],
+        },
       ],
     };
 
@@ -245,15 +269,14 @@ class Game {
     });
 
     // Запускаем фоновую музыку
-    this.audioManager
-      .playMusic("menu-music", {
+    try {
+      this.audioManager.playMusic("menu-music", {
         loop: true,
         volume: 0.5,
-        fadeIn: 1000,
-      })
-      .catch((error) => {
-        console.warn("Failed to play menu music:", error);
       });
+    } catch (error) {
+      console.warn("Failed to play menu music:", error);
+    }
   }
 
   private update(deltaTime: number, _elapsedMs: number): void {
