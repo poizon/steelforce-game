@@ -42,6 +42,10 @@ export class MenuScene extends BaseScene {
 
   protected notification!: Notification;
 
+  // Меню выбора сцены (открывается по кнопке "Настройки")
+  private sceneSelectContainer!: Container;
+  private isSceneSelectOpen: boolean = false;
+
   protected getSceneName(): SceneName {
     return "menu";
   }
@@ -68,6 +72,7 @@ export class MenuScene extends BaseScene {
     this.createSubtitle();
     this.createButtons();
     this.createVersionText();
+    this.createSceneSelectMenu();
 
     // Начальное состояние
     this.alpha = 0;
@@ -409,6 +414,153 @@ export class MenuScene extends BaseScene {
   }
 
   /**
+   * Создание отладочного меню выбора сцены (открывается кнопкой "Настройки")
+   */
+  private createSceneSelectMenu(): void {
+    const { width, height } = this.app.screen;
+    const scenes = this.sceneManager.getRegisteredScenes();
+
+    this.sceneSelectContainer = new Container();
+    this.sceneSelectContainer.visible = false;
+    this.sceneSelectContainer.alpha = 0;
+
+    // Затемнение под всю сцену; блокирует клики по кнопкам меню позади
+    const overlay = new Graphics();
+    overlay.rect(0, 0, width, height);
+    overlay.fill({ color: 0x000000, alpha: 0.75 });
+    overlay.eventMode = "static";
+    overlay.cursor = "default";
+    this.sceneSelectContainer.addChild(overlay);
+
+    const panelWidth = 420;
+    const rowHeight = 44;
+    const panelHeight = 90 + scenes.length * rowHeight;
+    const panelX = (width - panelWidth) / 2;
+    const panelY = (height - panelHeight) / 2;
+
+    const panel = new Graphics();
+    panel.roundRect(0, 0, panelWidth, panelHeight, 6);
+    panel.fill({ color: 0x111111, alpha: 0.95 });
+    panel.stroke({ width: 2, color: 0xff6600 });
+    panel.x = panelX;
+    panel.y = panelY;
+    this.sceneSelectContainer.addChild(panel);
+
+    const title = new Text({
+      text: "Выбор сцены (debug)",
+      style: new TextStyle({
+        fontFamily: "Press Start 2P, monospace",
+        fontSize: 14,
+        fill: 0xff6600,
+        letterSpacing: 1,
+      }),
+    });
+    title.anchor.set(0.5, 0);
+    title.x = panelX + panelWidth / 2;
+    title.y = panelY + 20;
+    this.sceneSelectContainer.addChild(title);
+
+    scenes.forEach((sceneName, index) => {
+      const rowWidth = panelWidth - 40;
+      const rowBoxHeight = rowHeight - 8;
+
+      const row = new Container();
+      row.x = panelX + 20;
+      row.y = panelY + 60 + index * rowHeight;
+      row.eventMode = "static";
+      row.cursor = "pointer";
+
+      const rowBg = new Graphics();
+      const drawRowBg = (hovered: boolean) => {
+        rowBg.clear();
+        rowBg.rect(0, 0, rowWidth, rowBoxHeight);
+        rowBg.fill({ color: 0x000000, alpha: hovered ? 0.7 : 0.4 });
+        rowBg.stroke({ width: 1, color: hovered ? 0xff6600 : 0x444444 });
+      };
+      drawRowBg(false);
+      row.addChild(rowBg);
+
+      const label = new Text({
+        text: sceneName,
+        style: new TextStyle({
+          fontFamily: "Press Start 2P, monospace",
+          fontSize: 12,
+          fill: 0xffffff,
+        }),
+      });
+      label.anchor.set(0, 0.5);
+      label.x = 12;
+      label.y = rowBoxHeight / 2;
+      row.addChild(label);
+
+      row.on("pointerover", () => drawRowBg(true));
+      row.on("pointerout", () => drawRowBg(false));
+      row.on("pointerdown", () => this.goToScene(sceneName));
+
+      this.sceneSelectContainer.addChild(row);
+    });
+
+    // Кнопка закрытия
+    const closeButton = new Text({
+      text: "✕",
+      style: new TextStyle({
+        fontFamily: "monospace",
+        fontSize: 18,
+        fill: 0xff6600,
+      }),
+    });
+    closeButton.anchor.set(0.5);
+    closeButton.x = panelX + panelWidth - 20;
+    closeButton.y = panelY + 20;
+    closeButton.eventMode = "static";
+    closeButton.cursor = "pointer";
+    closeButton.on("pointerdown", () => this.closeSceneSelectMenu());
+    this.sceneSelectContainer.addChild(closeButton);
+
+    this.addChild(this.sceneSelectContainer);
+  }
+
+  /**
+   * Открытие меню выбора сцены
+   */
+  private openSceneSelectMenu(): void {
+    this.isSceneSelectOpen = true;
+    this.sceneSelectContainer.visible = true;
+    this.sceneSelectContainer.alpha = 0;
+    this.createTween(this.sceneSelectContainer, { alpha: 1 }, 200);
+  }
+
+  /**
+   * Закрытие меню выбора сцены
+   */
+  private closeSceneSelectMenu(): void {
+    this.isSceneSelectOpen = false;
+    this.sceneSelectContainer.visible = false;
+  }
+
+  /**
+   * Переход к выбранной сцене из отладочного меню
+   */
+  private async goToScene(name: SceneName): Promise<void> {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+    this.closeSceneSelectMenu();
+
+    try {
+      await this.fadeOut(500);
+      await this.sceneManager.switchTo(
+        name,
+        {},
+        { type: "fade", duration: 800 },
+      );
+    } catch (error) {
+      console.error(`Failed to switch to scene "${name}":`, error);
+      this.isTransitioning = false;
+      await this.fadeIn(300);
+    }
+  }
+
+  /**
    * Анимация появления элементов
    */
   private async animateElementsIn(): Promise<void> {
@@ -533,6 +685,8 @@ export class MenuScene extends BaseScene {
    * Выбор следующей кнопки
    */
   private selectNextButton(): void {
+    if (this.isSceneSelectOpen) return;
+
     let nextIndex = this.selectedButtonIndex + 1;
     while (nextIndex < this.buttons.length) {
       if (!this.isButtonDisabled(nextIndex)) {
@@ -548,6 +702,8 @@ export class MenuScene extends BaseScene {
    * Выбор предыдущей кнопки
    */
   private selectPreviousButton(): void {
+    if (this.isSceneSelectOpen) return;
+
     let prevIndex = this.selectedButtonIndex - 1;
     while (prevIndex >= 0) {
       if (!this.isButtonDisabled(prevIndex)) {
@@ -572,6 +728,8 @@ export class MenuScene extends BaseScene {
    * Активация текущей выбранной кнопки
    */
   private activateCurrentButton(): void {
+    if (this.isSceneSelectOpen) return;
+
     this.activateButton(this.selectedButtonIndex);
   }
 
@@ -661,14 +819,9 @@ export class MenuScene extends BaseScene {
 
     await this.animateButtonPress(this.buttons[2]);
 
-    // Показываем уведомление
-    this.notification.show({
-      message: "Настройки будут доступны\nв следующей версии",
-      type: "info",
-      duration: 3000,
-    });
+    // Открываем меню выбора сцены вместо заглушки-заглушки
+    this.openSceneSelectMenu();
 
-    await this.delay(500);
     this.isTransitioning = false;
   }
 
@@ -693,6 +846,11 @@ export class MenuScene extends BaseScene {
    * Обработчик клавиши Escape
    */
   private onEscapePressed(): void {
+    if (this.isSceneSelectOpen) {
+      this.closeSceneSelectMenu();
+      return;
+    }
+
     this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
       message: "Нажмите Alt+F4 для выхода",
       type: "info",

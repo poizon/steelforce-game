@@ -152,6 +152,8 @@ class Game {
             },
             { alias: "character-n", src: "assets/sprites/character-n.png" },
             { alias: "character-m", src: "assets/sprites/character-m.png" },
+            { alias: "radio", src: "assets/sprites/radio.png" },
+            { alias: "textarea", src: "assets/sprites/textarea.png" },
           ],
         },
         // {

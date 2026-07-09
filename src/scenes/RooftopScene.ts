@@ -33,6 +33,12 @@ export class RooftopScene extends BaseScene.BaseScene {
 
   // Диалог
   private dialogBox!: DialogBox;
+  private textareaBackground!: Sprite;
+
+  // Раскладка персонажей (заполняется в createCharacters, используется в createRadio)
+  private readonly characterGapRatio: number = 0.05; // 5% ширины экрана между персонажами
+  private charactersBaselineY: number = 0;
+  private leftCharacterX: number = 0;
 
   // Эффекты
   private smokeParticles: Graphics[] = [];
@@ -105,8 +111,6 @@ export class RooftopScene extends BaseScene.BaseScene {
   protected setup(): void {
     this.createBackground();
     this.createSkyGradient();
-    this.createBuildings();
-    this.createRooftop();
     this.createCharacters();
     this.createRadio();
     this.createEffects();
@@ -143,11 +147,8 @@ export class RooftopScene extends BaseScene.BaseScene {
 
   protected async onEnter(): Promise<void> {
     // Музыка и эмбиент
-    this.audioManager.stopCategory("music", 1000);
-    this.audioManager.playAmbient("wind-ambient", {
-      volume: 0.3,
-      fadeIn: 2000,
-    });
+    this.audioManager.stopCategory("music");
+    this.audioManager.playAmbient("wind-ambient", { volume: 0.3 });
 
     // Анимация появления
     await this.fadeIn(1000);
@@ -167,14 +168,14 @@ export class RooftopScene extends BaseScene.BaseScene {
 
     // Анимация радио помех
     if (this.isRadioPlaying) {
-      this.updateRadioStatic(delta);
+      this.updateRadioStatic();
     }
 
     // Анимация персонажей
-    this.updateCharacters(delta);
+    this.updateCharacters();
 
     // Обновление красного неба
-    this.updateRedSky(delta);
+    this.updateRedSky();
   }
 
   /**
@@ -211,159 +212,52 @@ export class RooftopScene extends BaseScene.BaseScene {
   }
 
   /**
-   * Создание зданий на заднем плане
-   */
-  private createBuildings(): void {
-    this.buildingsBackground = new Container();
-
-    // Силуэты зданий
-    const buildingData = [
-      { x: 0, width: 200, height: 300 },
-      { x: 150, width: 150, height: 400 },
-      { x: 280, width: 180, height: 350 },
-      { x: 420, width: 220, height: 450 },
-      { x: 600, width: 160, height: 380 },
-      { x: 730, width: 200, height: 420 },
-      { x: 900, width: 180, height: 360 },
-      { x: 1050, width: 230, height: 400 },
-    ];
-
-    buildingData.forEach((data) => {
-      const building = new Graphics();
-      building.rect(
-        data.x,
-        this.app.screen.height * 0.6 - data.height,
-        data.width,
-        data.height,
-      );
-      building.fill({ color: 0x0a0a0a, alpha: 0.8 });
-
-      // Окна
-      for (
-        let wy = this.app.screen.height * 0.6 - data.height + 20;
-        wy < this.app.screen.height * 0.6 - 20;
-        wy += 30
-      ) {
-        for (let wx = data.x + 10; wx < data.x + data.width - 10; wx += 25) {
-          if (Math.random() > 0.3) {
-            const isLit = Math.random() > 0.5;
-            building.rect(wx, wy, 10, 15);
-            building.fill({
-              color: isLit ? 0xffaa00 : 0x333333,
-              alpha: isLit ? 0.6 : 0.3,
-            });
-          }
-        }
-      }
-
-      this.buildingsBackground.addChild(building);
-    });
-
-    // Дым из труб
-    for (let i = 0; i < 5; i++) {
-      const smoke = this.createSmokeParticle(
-        Math.random() * this.app.screen.width,
-        this.app.screen.height * 0.3,
-      );
-      this.buildingsBackground.addChild(smoke);
-    }
-
-    this.addChild(this.buildingsBackground);
-  }
-
-  /**
-   * Создание крыши
-   */
-  private createRooftop(): void {
-    this.rooftopForeground = new Container();
-
-    // Поверхность крыши
-    const roof = new Graphics();
-    roof.rect(
-      0,
-      this.app.screen.height * 0.65,
-      this.app.screen.width,
-      this.app.screen.height * 0.35,
-    );
-    roof.fill({ color: 0x2a2a2a });
-
-    // Текстура крыши
-    for (let i = 0; i < this.app.screen.width; i += 50) {
-      roof.rect(
-        i,
-        this.app.screen.height * 0.65,
-        2,
-        this.app.screen.height * 0.35,
-      );
-      roof.fill({ color: 0x333333, alpha: 0.3 });
-    }
-
-    this.rooftopForeground.addChild(roof);
-
-    // Парапет
-    const parapet = new Graphics();
-    parapet.rect(0, this.app.screen.height * 0.63, this.app.screen.width, 20);
-    parapet.fill({ color: 0x444444 });
-    parapet.stroke({ width: 1, color: 0x555555 });
-    this.rooftopForeground.addChild(parapet);
-
-    // Вентиляционные трубы
-    this.createVentPipe(100, this.app.screen.height * 0.55);
-    this.createVentPipe(500, this.app.screen.height * 0.5);
-    this.createVentPipe(900, this.app.screen.height * 0.53);
-
-    this.addChild(this.rooftopForeground);
-  }
-
-  /**
-   * Создание вентиляционной трубы
-   */
-  private createVentPipe(x: number, y: number): void {
-    const pipe = new Graphics();
-    pipe.rect(x, y, 30, this.app.screen.height * 0.65 - y);
-    pipe.fill({ color: 0x555555 });
-    pipe.stroke({ width: 1, color: 0x666666 });
-    this.rooftopForeground.addChild(pipe);
-
-    // Дым из трубы
-    const smoke = this.createSmokeParticle(x + 15, y);
-    this.rooftopForeground.addChild(smoke);
-  }
-
-  /**
    * Создание персонажей
    */
   private createCharacters(): void {
+    const { width, height } = this.app.screen;
+
+    // Персонажи центрированы по горизонтали; высота от нижней границы экрана — 15%
+    this.charactersBaselineY = height * 0.85;
+    const halfGap = (width * this.characterGapRatio) / 2;
+
     this.charactersContainer = new Container();
-    this.charactersContainer.y = this.app.screen.height * 0.45;
+    this.charactersContainer.x = width / 2;
+    this.charactersContainer.y = this.charactersBaselineY - 20;
 
     // Персонаж Н (слева)
     this.characterN = new Sprite(this.assetLoader.getTexture("character-n"));
     this.characterN.anchor.set(0.5, 1);
-    this.characterN.x = this.app.screen.width * 0.35;
+    this.characterN.x = -halfGap - 100;
     this.characterN.scale.set(0.8);
 
     // Персонаж М (справа)
     this.characterM = new Sprite(this.assetLoader.getTexture("character-m"));
     this.characterM.anchor.set(0.5, 1);
-    this.characterM.x = this.app.screen.width * 0.55;
+    this.characterM.x = halfGap + 100;
     this.characterM.scale.set(0.8);
 
     this.charactersContainer.addChild(this.characterN, this.characterM);
     this.addChild(this.charactersContainer);
+
+    // Абсолютная координата левого персонажа — нужна для позиционирования радио
+    this.leftCharacterX = this.charactersContainer.x - halfGap;
   }
 
   /**
    * Создание радио
    */
   private createRadio(): void {
-    this.radioContainer = new Container();
-    this.radioContainer.x = this.app.screen.width * 0.7;
-    this.radioContainer.y = this.app.screen.height * 0.5;
+    const { width } = this.app.screen;
 
-    // Спрайт радио
+    this.radioContainer = new Container();
+    // Радио размещаем левее персонажей с отступом от них в 5% ширины экрана
+    this.radioContainer.x = this.leftCharacterX - width * 0.25;
+    this.radioContainer.y = this.charactersBaselineY - 40;
+
+    // Спрайт радио (тот же базовый уровень, что и у персонажей)
     this.radioSprite = new Sprite(this.assetLoader.getTexture("radio"));
-    this.radioSprite.anchor.set(0.5);
+    this.radioSprite.anchor.set(0.5, 1);
     this.radioSprite.scale.set(0.6);
 
     // Эффект помех
@@ -385,7 +279,29 @@ export class RooftopScene extends BaseScene.BaseScene {
    * Создание диалогового окна
    */
   private createDialogBox(): void {
-    this.dialogBox = new DialogBox(this.eventBus);
+    const { width, height } = this.app.screen;
+
+    const boxWidth = width * 0.9;
+    const boxHeight = height * 0.22;
+    const boxX = (width - boxWidth) / 2;
+    const marginBottom = height * 0.01; // отступ 1% от нижней границы экрана
+    const boxY = height - marginBottom - boxHeight;
+
+    // Блок, в который выводится текст (текстура textarea)
+    this.textareaBackground = new Sprite(
+      this.assetLoader.getTexture("textarea"),
+    );
+    this.textareaBackground.x = boxX;
+    this.textareaBackground.y = boxY;
+    this.textareaBackground.width = boxWidth;
+    this.textareaBackground.height = boxHeight;
+    this.addChild(this.textareaBackground);
+
+    this.dialogBox = new DialogBox(this.eventBus, {
+      width: boxWidth,
+      height: boxHeight,
+    });
+    this.dialogBox.setPosition(boxX, boxY);
     this.dialogBox.visible = false;
     this.addChild(this.dialogBox);
   }
@@ -530,7 +446,7 @@ export class RooftopScene extends BaseScene.BaseScene {
 
     // Затухание радио
     await this.delay(2000);
-    this.audioManager.stop("radio-static", 500);
+    this.audioManager.stop("radio-static");
     await this.fadeOutRadioText();
 
     this.isRadioPlaying = false;
@@ -724,7 +640,7 @@ export class RooftopScene extends BaseScene.BaseScene {
     // Пропускаем всю сцену
     this.isRadioPlaying = false;
     this.isDialogActive = false;
-    this.audioManager.stopAll(500);
+    this.audioManager.stopAll();
     this.transitionToNextScene();
   }
 
@@ -933,7 +849,7 @@ export class RooftopScene extends BaseScene.BaseScene {
    * Очистка сцены
    */
   public async cleanup(): Promise<void> {
-    this.audioManager.stopAll(500);
+    this.audioManager.stopAll();
     this.smokeParticles.length = 0;
     this.windLines.length = 0;
     this.radioTextLines.length = 0;
