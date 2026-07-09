@@ -65,7 +65,7 @@ export class SceneManager {
     this.audioManager = audioManager;
     this.assetLoader = assetLoader;
 
-    this.setupGlobalListeners();
+    this.resubscribeGlobalListeners();
   }
 
   public register(name: SceneName, sceneClass: SceneConstructor): void {
@@ -370,7 +370,14 @@ export class SceneManager {
     this.transitionDuration = duration;
   }
 
-  private setupGlobalListeners(): void {
+  /**
+   * Подписывает SceneManager на глобальные события EventBus.
+   * Вызывается из конструктора, а также должна вызываться повторно,
+   * если кто-то снаружи очистил все подписки через `EventBus.offAll()`
+   * (например, при рестарте игры), иначе автосохранение и переключение
+   * сцен через событие SCENE_CHANGE перестанут работать.
+   */
+  public resubscribeGlobalListeners(): void {
     this.eventBus.on(
       GameEvent.SCENE_CHANGE,
       (data: { to: string; from?: string }) => {

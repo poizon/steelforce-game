@@ -393,6 +393,21 @@ class Game {
     this.eventBus.offAll();
     this.audioManager.stopAll();
 
+    // `offAll()` чистит все подписки EventBus, включая внутренние
+    // слушатели SceneManager'а (SCENE_CHANGE / автосохранение на
+    // SCENE_TRANSITION_END), которые были зарегистрированы только один
+    // раз в конструкторе. Без повторной подписки они пропадают навсегда
+    // после первого рестарта.
+    this.sceneManager.resubscribeGlobalListeners();
+
+    // Скрываем меню паузы и возобновляем тикер: если рестарт вызван из паузы,
+    // `pauseGame()` уже остановил `app.ticker` и показал `#pause-menu`, и без
+    // этого шага игра после рестарта останется невидимой за оверлеем паузы.
+    this.hidePauseMenu();
+    if (!this.app.ticker.started) {
+      this.app.ticker.start();
+    }
+
     // Перерегистрируем сцены (они теряются после destroy)
     this.registerScenes();
 

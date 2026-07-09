@@ -11,6 +11,11 @@ import { GameEvent } from "../core/EventBus";
 import type { SceneName } from "../core/SceneManager";
 import { Notification } from "../components/Notification";
 
+// Ключи объекта T, чьи значения являются числами (подходят для твина)
+type NumericKeys<T> = {
+  [K in keyof T]: T[K] extends number ? K : never;
+}[keyof T];
+
 export class MenuScene extends BaseScene {
   // Элементы сцены
   private background!: Sprite;
@@ -20,6 +25,8 @@ export class MenuScene extends BaseScene {
 
   // Кнопки
   private buttons: Container[] = [];
+  private buttonDisabled: boolean[] = [];
+  private buttonActions: Array<() => void> = [];
   private selectedButtonIndex: number = 0;
   private isTransitioning: boolean = false;
 
@@ -99,10 +106,7 @@ export class MenuScene extends BaseScene {
 
     // Запускаем музыку меню
     try {
-      await this.audioManager.playMusic("menu-music", {
-        volume: 0.4,
-        fadeIn: 2000,
-      });
+      this.audioManager.playMusic("menu-music", { volume: 0.4 });
     } catch (error) {
       console.warn("Failed to play menu music:", error);
     }
@@ -129,10 +133,10 @@ export class MenuScene extends BaseScene {
     this.animateParticles(delta);
 
     // Анимация дыма
-    this.animateSmoke(delta);
+    this.animateSmoke();
 
     // Пульсация выбранной кнопки
-    this.animateSelectedButton(delta);
+    this.animateSelectedButton();
   }
 
   /**
@@ -236,7 +240,7 @@ export class MenuScene extends BaseScene {
    */
   private createTitle(): void {
     this.titleText = new Text({
-      text: "SteelForce",
+      text: "",
       style: new TextStyle({
         fontFamily: "Press Start 2P, monospace",
         fontSize: 48,
@@ -264,7 +268,7 @@ export class MenuScene extends BaseScene {
    */
   private createSubtitle(): void {
     this.subtitleText = new Text({
-      text: "Escape from Zone",
+      text: "",
       style: new TextStyle({
         fontFamily: "Press Start 2P, monospace",
         fontSize: 20,
@@ -317,27 +321,20 @@ export class MenuScene extends BaseScene {
       button.eventMode = "static";
       button.cursor = config.disabled ? "default" : "pointer";
 
+      this.buttonDisabled.push(config.disabled);
+      this.buttonActions.push(config.action);
+
       button.on("pointerover", () => {
-        if (!config.disabled) {
+        if (!this.isButtonDisabled(index)) {
           this.selectButton(index);
         }
       });
 
-      button.on("pointerdown", () => {
-        if (!config.disabled && !this.isTransitioning) {
-          this.audioManager.playSFX("dialog-click", { volume: 0.5 });
-          config.action();
-        }
-      });
+      button.on("pointerdown", () => this.activateButton(index));
 
       this.buttons.push(button);
       this.addChild(button);
     });
-
-    // Кнопка "Продолжить" тусклая если нет сохранения
-    if (!this.hasSaveGame) {
-      this.buttons[1].alpha = 0.4;
-    }
   }
 
   /**
@@ -416,9 +413,10 @@ export class MenuScene extends BaseScene {
    */
   private async animateElementsIn(): Promise<void> {
     // Логотип
-    const logoTween = this.createTween(
-      this.logo,
-      { alpha: 1, scaleX: 1, scaleY: 1 },
+    const logoAlphaTween = this.createTween(this.logo, { alpha: 1 }, 1000);
+    const logoScaleTween = this.createTween(
+      this.logo.scale,
+      { x: 1, y: 1 },
       1000,
     );
     await this.delay(300);
@@ -437,10 +435,16 @@ export class MenuScene extends BaseScene {
     // Кнопки появляются последовательно
     for (let i = 0; i < this.buttons.length; i++) {
       await this.delay(150);
-      this.createTween(this.buttons[i], { alpha: 1 }, 500);
+      const targetAlpha = this.buttonDisabled[i] ? 0.4 : 1;
+      this.createTween(this.buttons[i], { alpha: targetAlpha }, 500);
     }
 
-    await Promise.all([logoTween, titleTween, subtitleTween]);
+    await Promise.all([
+      logoAlphaTween,
+      logoScaleTween,
+      titleTween,
+      subtitleTween,
+    ]);
   }
 
   /**
@@ -501,7 +505,7 @@ export class MenuScene extends BaseScene {
 
       if (!bg || !indicator) continue;
 
-      if (i === this.selectedButtonIndex && !this.isButtonDisabled(button)) {
+      if (i === this.selectedButtonIndex && !this.isButtonDisabled(i)) {
         const pulse = Math.sin(this.time * 3) * 0.2 + 0.8;
         bg.alpha = pulse;
         indicator.alpha = Math.sin(this.time * 4) * 0.5 + 0.5;
@@ -511,7 +515,7 @@ export class MenuScene extends BaseScene {
         bg.fill({ color: 0x000000, alpha: 0.7 });
         bg.stroke({ width: 2, color: 0xff6600 });
       } else {
-        bg.alpha = this.isButtonDisabled(button) ? 0.3 : 0.5;
+        bg.alpha = this.isButtonDisabled(i) ? 0.3 : 0.5;
         indicator.alpha = 0;
 
         bg.clear();
@@ -519,7 +523,7 @@ export class MenuScene extends BaseScene {
         bg.fill({ color: 0x000000, alpha: 0.5 });
         bg.stroke({
           width: 1,
-          color: this.isButtonDisabled(button) ? 0x444444 : 0x666666,
+          color: this.isButtonDisabled(i) ? 0x444444 : 0x666666,
         });
       }
     }
@@ -531,11 +535,9 @@ export class MenuScene extends BaseScene {
   private selectNextButton(): void {
     let nextIndex = this.selectedButtonIndex + 1;
     while (nextIndex < this.buttons.length) {
-      if (!this.isButtonDisabled(this.buttons[nextIndex])) {
+      if (!this.isButtonDisabled(nextIndex)) {
         this.selectButton(nextIndex);
-        this.audioManager
-          .playSFX("dialog-click", { volume: 0.3 })
-          .catch(() => {});
+        this.audioManager.playSFX("dialog-click", { volume: 0.3 });
         return;
       }
       nextIndex++;
@@ -548,11 +550,9 @@ export class MenuScene extends BaseScene {
   private selectPreviousButton(): void {
     let prevIndex = this.selectedButtonIndex - 1;
     while (prevIndex >= 0) {
-      if (!this.isButtonDisabled(this.buttons[prevIndex])) {
+      if (!this.isButtonDisabled(prevIndex)) {
         this.selectButton(prevIndex);
-        this.audioManager
-          .playSFX("dialog-click", { volume: 0.3 })
-          .catch(() => {});
+        this.audioManager.playSFX("dialog-click", { volume: 0.3 });
         return;
       }
       prevIndex--;
@@ -572,12 +572,17 @@ export class MenuScene extends BaseScene {
    * Активация текущей выбранной кнопки
    */
   private activateCurrentButton(): void {
-    if (this.isTransitioning) return;
+    this.activateButton(this.selectedButtonIndex);
+  }
 
-    const button = this.buttons[this.selectedButtonIndex];
-    if (button && !this.isButtonDisabled(button)) {
-      button.emit("pointerdown");
-    }
+  /**
+   * Активация кнопки по индексу (клик мышью или клавиатура)
+   */
+  private activateButton(index: number): void {
+    if (this.isTransitioning || this.isButtonDisabled(index)) return;
+
+    this.audioManager.playSFX("dialog-click", { volume: 0.5 });
+    this.buttonActions[index]?.();
   }
 
   /**
@@ -650,41 +655,6 @@ export class MenuScene extends BaseScene {
   /**
    * Обработчик кнопки "Настройки"
    */
-  // private async onSettings(): Promise<void> {
-  //   if (this.isTransitioning) return;
-  //   this.isTransitioning = true;
-
-  //   await this.animateButtonPress(this.buttons[2]);
-
-  //   this.eventBus.emit(GameEvent.UI_MENU_OPEN, { menuId: "settings" });
-  //   this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-  //     message: "Настройки будут доступны в следующей версии",
-  //     type: "info",
-  //   });
-
-  //   await this.delay(500);
-  //   this.isTransitioning = false;
-  // }
-
-  // /**
-  //  * Обработчик кнопки "Авторы"
-  //  */
-  // private async onCredits(): Promise<void> {
-  //   if (this.isTransitioning) return;
-  //   this.isTransitioning = true;
-
-  //   await this.animateButtonPress(this.buttons[3]);
-
-  //   this.eventBus.emit(GameEvent.UI_NOTIFICATION, {
-  //     message:
-  //       "",
-  //     type: "info",
-  //   });
-
-  //   await this.delay(500);
-  //   this.isTransitioning = false;
-  // }
-
   private async onSettings(): Promise<void> {
     if (this.isTransitioning) return;
     this.isTransitioning = true;
@@ -796,16 +766,18 @@ export class MenuScene extends BaseScene {
   /**
    * Создание анимации (твин)
    */
-  private createTween(
-    target: Container,
-    props: Record<string, number>,
+  private createTween<T extends object, K extends NumericKeys<T>>(
+    target: T,
+    props: Partial<Record<K, number>>,
     duration: number,
   ): Promise<void> {
-    const startProps: Record<string, number> = {};
+    // Один контролируемый каст, чтобы твинить любые числовые поля (alpha, x, y, ...)
+    const numericTarget = target as unknown as Record<K, number>;
+    const startProps = {} as Record<K, number>;
     const startTime = Date.now();
 
     for (const key in props) {
-      startProps[key] = (target as any)[key];
+      startProps[key] = numericTarget[key];
     }
 
     return new Promise((resolve) => {
@@ -815,8 +787,9 @@ export class MenuScene extends BaseScene {
         const eased = this.easeOutCubic(progress);
 
         for (const key in props) {
-          (target as any)[key] =
-            startProps[key] + (props[key] - startProps[key]) * eased;
+          const from = startProps[key];
+          const to = props[key] as number;
+          numericTarget[key] = from + (to - from) * eased;
         }
 
         if (progress < 1) {
@@ -844,8 +817,8 @@ export class MenuScene extends BaseScene {
   /**
    * Проверка, заблокирована ли кнопка
    */
-  private isButtonDisabled(button: Container): boolean {
-    return button.alpha <= 0.4;
+  private isButtonDisabled(index: number): boolean {
+    return this.buttonDisabled[index] ?? false;
   }
 
   /**
@@ -861,7 +834,7 @@ export class MenuScene extends BaseScene {
   public async cleanup(): Promise<void> {
     // Останавливаем музыку меню с затуханием
     try {
-      this.audioManager.stopCategory("music", 500);
+      this.audioManager.stopCategory("music");
     } catch (error) {
       console.warn("Failed to stop music:", error);
     }

@@ -34,37 +34,26 @@ export class NewsScene extends BaseScene {
   private newsArticles: NewsArticle[] = [
     {
       text: 'ЗАВОД "STEELFORCE" ВЫШЕЛ В ПЕРВЫЕ РЯДЫ СРЕДИ СВОИХ КОНКУРЕНТОВ ПО ПАРАМЕТРАМ ПРОИЗВОДСТВА...',
-      style: { fontSize: 22, fill: 0xff6600, fontWeight: "bold" },
-      duration: 2000,
+      style: { fontSize: 18, fill: 0xffffff, lineHeight: 34 },
+      duration: 1000,
     },
     {
-      text: "...число рабочих в филиалах завода превысило отметку в 10 тысяч человек..",
-      style: { fontSize: 20, fill: 0xcccccc },
-      duration: 1500,
-    },
-    {
-      text: "......",
-      delay: 500,
+      text: "...ЧИСЛО РАБОЧИХ В ФИЛИАЛАХ ЗАВОДА ПРЕВЫСИЛО ОТМЕТКУ В 10 ТЫСЯЧ ЧЕЛОВЕК..",
+      style: { fontSize: 18, fill: 0xffffff, lineHeight: 34 },
       duration: 1000,
     },
     {
       text: "16 НОЯБРЯ 2077 ГОДА НА ЗАВОДЕ ЗАПЛАНИРОВАН ЭКСПЕРИМЕНТ, В ХОДЕ КОТОРОГО БУДЕТ ПРОВЕРЕНА НОВАЯ СЫВОРОТКА, УСКОРЯЮЩАЯ ПРОЦЕСС ОБРАБОТКИ МЕТАЛЛА И ПРОДЛЕВАЮЩАЯ ЖИЗНЬ ИЗДЕЛИЯМ ИЗ НЕГО.",
       style: { fontSize: 18, fill: 0xffffff, lineHeight: 34 },
-      duration: 6000,
-    },
-    {
-      text: 'ЭКСПЕРИМЕНТ ИМЕЕТ ОБЩЕДОСТУПНЫЙ ХАРАКТЕР, И КАЖДЫЙ МОЖЕТ ПРИЙТИ И УВИДЕТЬ СВОИМИ ГЛАЗАМИ ПЕРСПЕКТИВЫ БУДУЩЕГО, КОТОРЫЕ ДАЁТ ЗАВОД "STEELFORCE"!!!',
-      style: {
-        fontSize: 20,
-        fill: 0xff6600,
-        fontStyle: "italic",
-        fontWeight: "bold",
-      },
       duration: 3000,
     },
     {
+      text: 'ЭКСПЕРИМЕНТ ИМЕЕТ ОБЩЕДОСТУПНЫЙ ХАРАКТЕР, И КАЖДЫЙ МОЖЕТ ПРИЙТИ И УВИДЕТЬ СВОИМИ ГЛАЗАМИ ПЕРСПЕКТИВЫ БУДУЩЕГО, КОТОРЫЕ ДАЁТ ЗАВОД "STEELFORCE"!!!',
+      style: { fontSize: 18, fill: 0xffffff, lineHeight: 34 },
+      duration: 2000,
+    },
+    {
       text: "......",
-      delay: 500,
       duration: 1000,
     },
   ];
@@ -107,14 +96,18 @@ export class NewsScene extends BaseScene {
 
   protected async onEnter(): Promise<void> {
     this.audioManager.stopCategory("music");
-    this.audioManager.playAmbient("factory-ambient", {
-      volume: 0.15,
-      fadeIn: 2000,
-    });
+    this.audioManager.playAmbient("factory-ambient", { volume: 0.15 });
     await this.fadeIn(1000);
     await this.animateNewspaperIn();
     await this.delay(500);
-    await this.startNewsSequence();
+
+    // Важно: не делаем await здесь. `enter()` вызывается из
+    // `SceneManager.switchTo`, который держит `isTransitioning = true` до тех пор,
+    // пока не завершится `enter()`. Если тут сделать await всей
+    // последовательности новостей, флаг останется `true` всё это время,
+    // и последующий вызов switchTo("rooftop") в onAllNewsComplete() будет
+    // молча проигнорирован SceneManager'ом (транзиция уже идёт).
+    void this.startNewsSequence();
   }
 
   public update(): void {
