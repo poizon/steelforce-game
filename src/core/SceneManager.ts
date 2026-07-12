@@ -134,6 +134,7 @@ export class SceneManager {
 
       this.currentScene = newScene;
       this.app.stage.addChild(this.currentScene);
+      this.isTransitioning = false;
       await this.currentScene.enter();
 
       this.eventBus.emit(GameEvent.SCENE_TRANSITION_END, {

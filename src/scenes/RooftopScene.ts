@@ -16,8 +16,6 @@ export class RooftopScene extends BaseScene.BaseScene {
   // Фоновые элементы
   private background!: Sprite;
   private skyGradient!: Graphics;
-  private buildingsBackground!: Container;
-  private rooftopForeground!: Container;
 
   // Персонажи
   private characterN!: Sprite;
@@ -56,20 +54,27 @@ export class RooftopScene extends BaseScene.BaseScene {
   // Текст радио
   private readonly radioBroadcastLines: string[] = [
     "ВНИМАНИЕ! ЭКСТРЕННОЕ СООБЩЕНИЕ!",
-    "16 ноября в ходе эксперимента по проверке",
-    "сыворотки произошел несчастный случай..",
+    "",
+    "16 ноября в ходе эксперимента по проверке сыворотки",
+    "",
+    "произошел несчастный случай..",
     "",
     "Погибло более двухсот человек,",
-    "остальные подверглись воздействию",
-    "вредных веществ и были...",
+    "остальные подверглись воздействию вредных веществ...",
+    "",
+    "...и были...",
     "",
     "Армия получила приказ о нанесении",
+    "",
     "удара термическими зарядами по",
+    "",
     "поражённому городу в течении 24 часов",
+    "",
     "с целью избавления от...",
     "",
-    "ВСЕМ ГРАЖДАНАМ НЕМЕДЛЕННО",
-    "ПОКИНУТЬ ГОРОД!",
+    "ВСЕМ ГРАЖДАНАМ",
+    "",
+    "НЕМЕДЛЕННО ПОКИНУТЬ ГОРОД!!!",
   ];
 
   // Диалоги
@@ -148,8 +153,6 @@ export class RooftopScene extends BaseScene.BaseScene {
   protected async onEnter(): Promise<void> {
     // Музыка и эмбиент
     this.audioManager.stopCategory("music");
-    this.audioManager.playAmbient("wind-ambient", { volume: 0.3 });
-
     // Анимация появления
     await this.fadeIn(1000);
 
@@ -218,7 +221,7 @@ export class RooftopScene extends BaseScene.BaseScene {
     const { width, height } = this.app.screen;
 
     // Персонажи центрированы по горизонтали; высота от нижней границы экрана — 15%
-    this.charactersBaselineY = height * 0.85;
+    this.charactersBaselineY = height * 0.84;
     const halfGap = (width * this.characterGapRatio) / 2;
 
     this.charactersContainer = new Container();
@@ -226,18 +229,18 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.charactersContainer.y = this.charactersBaselineY - 20;
 
     // Персонаж Н (слева)
-    this.characterN = new Sprite(this.assetLoader.getTexture("character-n"));
-    this.characterN.anchor.set(0.5, 1);
-    this.characterN.x = -halfGap - 100;
-    this.characterN.scale.set(0.8);
-
-    // Персонаж М (справа)
     this.characterM = new Sprite(this.assetLoader.getTexture("character-m"));
     this.characterM.anchor.set(0.5, 1);
-    this.characterM.x = halfGap + 100;
-    this.characterM.scale.set(0.8);
+    this.characterM.x = -halfGap - 120;
+    this.characterM.scale.set(1);
 
-    this.charactersContainer.addChild(this.characterN, this.characterM);
+    // Персонаж М (справа)
+    this.characterN = new Sprite(this.assetLoader.getTexture("character-n"));
+    this.characterN.anchor.set(0.5, 1);
+    this.characterN.x = halfGap + 100;
+    this.characterN.scale.set(1);
+
+    this.charactersContainer.addChild(this.characterM, this.characterN);
     this.addChild(this.charactersContainer);
 
     // Абсолютная координата левого персонажа — нужна для позиционирования радио
@@ -253,19 +256,20 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.radioContainer = new Container();
     // Радио размещаем левее персонажей с отступом от них в 5% ширины экрана
     this.radioContainer.x = this.leftCharacterX - width * 0.25;
-    this.radioContainer.y = this.charactersBaselineY - 40;
+    this.radioContainer.y = this.charactersBaselineY - 26;
 
     // Спрайт радио (тот же базовый уровень, что и у персонажей)
     this.radioSprite = new Sprite(this.assetLoader.getTexture("radio"));
     this.radioSprite.anchor.set(0.5, 1);
-    this.radioSprite.scale.set(0.6);
+    this.radioSprite.scale.set(1);
 
     // Эффект помех
-    this.radioStaticEffect = new Graphics();
+    this.radioStaticEffect = this.createRadioEffect();
 
     // Текст радио
     this.radioTextContainer = new Container();
-    this.radioTextContainer.y = -100;
+    this.radioTextContainer.y = -300;
+    this.radioTextContainer.x = -20;
 
     this.radioContainer.addChild(
       this.radioSprite,
@@ -275,6 +279,11 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.addChild(this.radioContainer);
   }
 
+  // Создайте здесь ваши прямоугольники для эффекта помех
+  private createRadioEffect(): Graphics {
+    const radioStaticEffect = new Graphics();
+    return radioStaticEffect;
+  }
   /**
    * Создание диалогового окна
    */
@@ -318,16 +327,6 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.vignette.circle(width / 2, height / 2, Math.min(width, height) * 0.6);
     this.vignette.fill({ color: 0x000000, alpha: 0 });
     this.addChild(this.vignette);
-
-    // Частицы дыма
-    for (let i = 0; i < 20; i++) {
-      const smoke = this.createSmokeParticle(
-        Math.random() * this.app.screen.width,
-        Math.random() * this.app.screen.height,
-      );
-      this.smokeParticles.push(smoke);
-      this.addChild(smoke);
-    }
 
     // Линии ветра
     for (let i = 0; i < 10; i++) {
@@ -385,20 +384,6 @@ export class RooftopScene extends BaseScene.BaseScene {
   }
 
   /**
-   * Создание частицы дыма
-   */
-  private createSmokeParticle(x: number, y: number): Graphics {
-    const particle = new Graphics();
-    particle.circle(0, 0, Math.random() * 20 + 10);
-    particle.fill({ color: 0x444444, alpha: 0.3 });
-    particle.x = x;
-    particle.y = y;
-    // particle.speed = Math.random() * 0.5 + 0.2;
-    // particle.offset = Math.random() * Math.PI * 2;
-    return particle;
-  }
-
-  /**
    * Основная последовательность сцены
    */
   private async playSceneSequence(): Promise<void> {
@@ -428,8 +413,8 @@ export class RooftopScene extends BaseScene.BaseScene {
     this.isRadioPlaying = true;
 
     // Звук помех
-    this.audioManager.playSFX("radio-static", {
-      volume: 0.3,
+    this.audioManager.playSFX("typing-sound", {
+      volume: 0.9,
       loop: true,
     });
 
@@ -439,14 +424,13 @@ export class RooftopScene extends BaseScene.BaseScene {
     // Показываем строки радио
     for (let i = 0; i < this.radioBroadcastLines.length; i++) {
       if (this.isTransitioning) break;
-
       await this.showRadioLine(i);
       await this.delay(800);
     }
 
     // Затухание радио
     await this.delay(2000);
-    this.audioManager.stop("radio-static");
+    this.audioManager.stop("typing-sound");
     await this.fadeOutRadioText();
 
     this.isRadioPlaying = false;
@@ -455,13 +439,16 @@ export class RooftopScene extends BaseScene.BaseScene {
   /**
    * Показ строки радио текста
    */
+  /**
+   * Показ строки радио текста
+   */
   private async showRadioLine(index: number): Promise<void> {
     const line = this.radioBroadcastLines[index];
 
     const textStyle = new TextStyle({
       fontFamily: "Press Start 2P",
-      fontSize: 10,
-      fill: 0x00ff00,
+      fontSize: 14,
+      fill: 0xffffff,
       wordWrap: true,
       wordWrapWidth: 200,
       align: "left",
@@ -471,15 +458,39 @@ export class RooftopScene extends BaseScene.BaseScene {
       text: line || " ",
       style: textStyle,
     });
-    textObject.alpha = 0;
 
-    // Позиционируем текст
-    textObject.y = this.radioTextLines.length * 14;
-    this.radioTextContainer.addChild(textObject);
-    this.radioTextLines.push(textObject);
+    // Паддинги фона вокруг текста
+    const paddingX = 6;
+    const paddingY = 3;
 
-    // Анимация появления
-    await this.fadeInText(textObject);
+    // Фон под строку текста
+    const background = new Graphics();
+    if (line) {
+      // Рисуем фон только под непустыми строками (пустые — просто отступ между блоками)
+      background.rect(
+        0,
+        0,
+        textObject.width + paddingX * 2,
+        textObject.height + paddingY * 2,
+      );
+      background.fill({ color: 0x000000, alpha: 0.55 });
+    }
+
+    // Смещаем текст внутрь фона с учётом паддинга
+    textObject.x = paddingX;
+    textObject.y = paddingY;
+
+    // Оборачиваем фон + текст в контейнер строки
+    const lineContainer = new Container();
+    lineContainer.addChild(background, textObject); // фон первым — под текстом
+    lineContainer.alpha = 0;
+    lineContainer.y = this.radioTextLines.length * 15;
+
+    this.radioTextContainer.addChild(lineContainer);
+    this.radioTextLines.push(textObject); // ссылку храним по-прежнему на текст
+
+    // Анимация появления — теперь всего контейнера строки
+    await this.fadeInText(lineContainer);
   }
 
   /**
@@ -617,12 +628,14 @@ export class RooftopScene extends BaseScene.BaseScene {
    */
   private skipRadioBroadcast(): void {
     this.isRadioPlaying = false;
-    this.audioManager.stop("radio-static");
+    this.audioManager.stop("typing-sound");
 
     // Показываем весь текст сразу
     this.radioTextLines.forEach((line, index) => {
       line.text = this.radioBroadcastLines[index] || "";
-      line.alpha = 1;
+      if (line.parent) {
+        line.parent.alpha = 1; // alpha теперь на lineContainer, а не на самом Text
+      }
     });
 
     // Быстро завершаем радио
@@ -708,9 +721,9 @@ export class RooftopScene extends BaseScene.BaseScene {
   }
 
   /**
-   * Анимация появления текста
+   * Анимация появления текста/контейнера
    */
-  private async fadeInText(text: Text): Promise<void> {
+  private async fadeInText(target: Container | Text): Promise<void> {
     const startTime = Date.now();
     const duration = 300;
 
@@ -719,7 +732,7 @@ export class RooftopScene extends BaseScene.BaseScene {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        text.alpha = progress;
+        target.alpha = progress;
 
         if (progress < 1) {
           requestAnimationFrame(animate);
@@ -782,10 +795,13 @@ export class RooftopScene extends BaseScene.BaseScene {
    */
   private updateRadioStatic(): void {
     this.radioStaticEffect.clear();
+    const offsetY = -this.radioSprite.height * 0.6; // подстройте под текстуру
 
     for (let i = 0; i < 5; i++) {
-      const x = -50 + Math.random() * 100;
-      const y = -20 + Math.random() * 40;
+      const x =
+        -this.radioSprite.width * 0.3 +
+        Math.random() * this.radioSprite.width * 0.6;
+      const y = offsetY + (-20 + Math.random() * 40);
       const width = Math.random() * 30 + 10;
       const height = Math.random() * 2 + 1;
 
@@ -796,7 +812,6 @@ export class RooftopScene extends BaseScene.BaseScene {
       });
     }
   }
-
   /**
    * Обновление персонажей
    */

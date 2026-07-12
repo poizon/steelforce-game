@@ -47,8 +47,9 @@ export class Player extends pixiJs.Container {
   private damageEffect!: pixiJs.Graphics;
   private invincibilityShield!: pixiJs.Graphics;
   private dustParticles: pixiJs.Graphics[] = [];
+  private readonly maxDustParticles: number = 20;
 
-  // Физика
+  // Физика (гравитация применяется извне, сценой)
   public velocityX: number = 0;
   public velocityY: number = 0;
   private isOnGround: boolean = false;
@@ -87,17 +88,12 @@ export class Player extends pixiJs.Container {
     this.createSprite();
     this.createEffects();
 
-    // Начальное состояние
     this.alpha = 1;
     this.scale.set(0.8);
 
-    // Интерактивность
     this.eventMode = "static";
   }
 
-  /**
-   * Создание тени
-   */
   private createShadow(): void {
     this.shadow = new pixiJs.Graphics();
     this.shadow.ellipse(0, 0, 20, 8);
@@ -106,12 +102,7 @@ export class Player extends pixiJs.Container {
     this.addChild(this.shadow);
   }
 
-  /**
-   * Загрузка текстур для анимаций
-   */
   private loadTextures(): void {
-    // В реальном проекте текстуры загружаются из ассетов
-    // Здесь создаём заглушки
     this.idleTextures = [this.createPlaceholderTexture(0x4488ff)];
     this.runTextures = [
       this.createPlaceholderTexture(0x4488ff),
@@ -123,9 +114,6 @@ export class Player extends pixiJs.Container {
     this.deathTextures = [this.createPlaceholderTexture(0x444444)];
   }
 
-  /**
-   * Создание заглушки текстуры
-   */
   private createPlaceholderTexture(color: number): pixiJs.Texture {
     const canvas = document.createElement("canvas");
     canvas.width = 48;
@@ -133,19 +121,15 @@ export class Player extends pixiJs.Container {
 
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      // Тело
       ctx.fillStyle = `#${color.toString(16).padStart(6, "0")}`;
       ctx.fillRect(12, 20, 24, 32);
 
-      // Голова
       ctx.fillStyle = "#ffcc99";
       ctx.fillRect(14, 4, 20, 18);
 
-      // Волосы (для различения персонажей)
       ctx.fillStyle = "#333333";
       ctx.fillRect(10, 2, 28, 8);
 
-      // Глаза
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(16, 10, 6, 4);
       ctx.fillRect(26, 10, 6, 4);
@@ -154,12 +138,10 @@ export class Player extends pixiJs.Container {
       ctx.fillRect(18, 11, 3, 3);
       ctx.fillRect(28, 11, 3, 3);
 
-      // Ноги
       ctx.fillStyle = "#333333";
       ctx.fillRect(14, 52, 8, 12);
       ctx.fillRect(26, 52, 8, 12);
 
-      // Руки
       ctx.fillStyle = "#ffcc99";
       ctx.fillRect(6, 22, 8, 20);
       ctx.fillRect(34, 22, 8, 20);
@@ -168,9 +150,6 @@ export class Player extends pixiJs.Container {
     return pixiJs.Texture.from(canvas);
   }
 
-  /**
-   * Создание спрайта
-   */
   private createSprite(): void {
     this.sprite = new pixiJs.AnimatedSprite(this.idleTextures);
     this.sprite.anchor.set(0.5);
@@ -179,25 +158,19 @@ export class Player extends pixiJs.Container {
     this.addChild(this.sprite);
   }
 
-  /**
-   * Создание эффектов
-   */
   private createEffects(): void {
-    // Эффект урона
     this.damageEffect = new pixiJs.Graphics();
     this.damageEffect.circle(0, 0, 30);
     this.damageEffect.fill({ color: 0xff0000, alpha: 0 });
     this.damageEffect.visible = false;
     this.addChild(this.damageEffect);
 
-    // Щит неуязвимости
     this.invincibilityShield = new pixiJs.Graphics();
     this.invincibilityShield.circle(0, 0, 35);
     this.invincibilityShield.fill({ color: 0x00ff00, alpha: 0 });
     this.invincibilityShield.visible = false;
     this.addChild(this.invincibilityShield);
 
-    // Частицы пыли при движении
     for (let i = 0; i < 5; i++) {
       const particle = this.createDustParticle();
       this.dustParticles.push(particle);
@@ -205,9 +178,6 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Создание частицы пыли
-   */
   private createDustParticle(): pixiJs.Graphics {
     const particle = new pixiJs.Graphics();
     particle.circle(0, 0, Math.random() * 2 + 1);
@@ -217,18 +187,17 @@ export class Player extends pixiJs.Container {
   }
 
   /**
-   * Привязка событий
+   * Привязка событий.
+   *
+   * ВАЖНО: подписка на PLAYER_DAMAGE намеренно убрана. Раньше сцена
+   * эмитила PLAYER_DAMAGE, Player его ловил и вызывал takeDamage(),
+   * а takeDamage() в конце САМ эмитил PLAYER_DAMAGE — получался
+   * самослушающий круг. Теперь урон наносится напрямую вызовом
+   * player.takeDamage() (см. PlatformScene.damagePlayer), а
+   * eventBus.emit(PLAYER_DAMAGE) внутри takeDamage() используется
+   * только как ИСХОДЯЩЕЕ уведомление для HUD и других систем.
    */
   private bindEvents(): void {
-    // Слушаем события урона
-    this.eventBus.on(
-      GameEvent.PLAYER_DAMAGE,
-      (data: { amount: number; source?: string }) => {
-        this.takeDamage(data.amount, data.source);
-      },
-    );
-
-    // Слушаем события лечения
     this.eventBus.on(GameEvent.PLAYER_HEAL, (data: { amount: number }) => {
       this.heal(data.amount);
     });
@@ -241,18 +210,14 @@ export class Player extends pixiJs.Container {
     if (!this._isAlive) return;
 
     this.updateState(delta);
-    this.updateAnimation(delta);
+    this.updateAnimation();
     this.updateEffects(delta);
     this.updateInvincibility(delta);
     this.updateShadow();
     this.emitPositionEvent();
   }
 
-  /**
-   * Обновление состояния
-   */
   private updateState(delta: number): void {
-    // Определение состояния
     if (!this._isAlive) {
       this.state = "dead";
     } else if (this.isInvincible) {
@@ -267,7 +232,6 @@ export class Player extends pixiJs.Container {
       this.state = "idle";
     }
 
-    // Обновление звуков шагов
     if (this.state === "running" && this.isOnGround) {
       this.footstepsTimer += delta;
       if (this.footstepsTimer >= this.footstepsInterval) {
@@ -277,9 +241,6 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Обновление анимации
-   */
   private updateAnimation(): void {
     let targetTextures: pixiJs.Texture[];
 
@@ -313,21 +274,15 @@ export class Player extends pixiJs.Container {
         targetTextures = this.idleTextures;
     }
 
-    // Обновление текстур если изменились
     if (this.sprite.textures !== targetTextures) {
       this.sprite.textures = targetTextures;
       this.sprite.play();
     }
 
-    // Направление спрайта
     this.sprite.scale.x = this.direction === "right" ? 0.8 : -0.8;
   }
 
-  /**
-   * Обновление эффектов
-   */
   private updateEffects(delta: number): void {
-    // Эффект пыли при приземлении
     this.dustParticles.forEach((particle) => {
       if (particle.alpha > 0) {
         particle.alpha -= delta * 0.01;
@@ -336,7 +291,6 @@ export class Player extends pixiJs.Container {
       }
     });
 
-    // Щит неуязвимости
     if (this.isInvincible) {
       this.invincibilityShield.visible = true;
       this.invincibilityShield.alpha = 0.3 + Math.sin(Date.now() * 0.01) * 0.1;
@@ -348,14 +302,10 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Обновление неуязвимости
-   */
   private updateInvincibility(delta: number): void {
     if (this.isInvincible) {
       this.invincibilityTimer -= delta;
 
-      // Мерцание спрайта
       this.sprite.alpha = Math.sin(Date.now() * 0.05) * 0.3 + 0.7;
 
       if (this.invincibilityTimer <= 0) {
@@ -365,19 +315,12 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Обновление тени
-   */
   private updateShadow(): void {
-    // Тень становится меньше при прыжке
     const heightFactor = 1 - Math.abs(this.velocityY) * 0.02;
     this.shadow.scale.set(Math.max(0.5, heightFactor));
     this.shadow.alpha = 0.2 + heightFactor * 0.2;
   }
 
-  /**
-   * Отправка события позиции
-   */
   private emitPositionEvent(): void {
     this.eventBus.emit(GameEvent.PLAYER_MOVE, {
       position: { x: this.x, y: this.y },
@@ -386,7 +329,10 @@ export class Player extends pixiJs.Container {
   }
 
   /**
-   * Движение игрока
+   * Полное 2D-движение (сохранено для случаев вне платформера,
+   * например для сцен без гравитации). Трогает обе оси скорости —
+   * НЕ используйте это для горизонтального бега в PlatformScene,
+   * там нужен moveHorizontal().
    */
   public move(dx: number, dy: number): void {
     if (!this._isAlive) return;
@@ -397,13 +343,37 @@ export class Player extends pixiJs.Container {
     this.x += this.velocityX;
     this.y += this.velocityY;
 
-    // Определение направления
     if (dx !== 0) {
       this.direction = dx > 0 ? "right" : "left";
     }
 
-    // Флаг движения
     this.isMoving = dx !== 0 || dy !== 0;
+  }
+
+  /**
+   * Горизонтальное движение для платформера.
+   * Не трогает velocityY — гравитацию/прыжок сцена считает отдельно.
+   */
+  public moveHorizontal(dx: number): void {
+    if (!this._isAlive) return;
+
+    this.velocityX = dx * this.config.speed;
+    this.x += this.velocityX;
+
+    if (dx !== 0) {
+      this.direction = dx > 0 ? "right" : "left";
+    }
+
+    this.isMoving = dx !== 0;
+  }
+
+  /**
+   * Остановка горизонтального движения — вызывать при отпускании
+   * клавиши (onKeyUp), иначе состояние "running" останется навсегда.
+   */
+  public stopHorizontalMovement(): void {
+    this.velocityX = 0;
+    this.isMoving = false;
   }
 
   /**
@@ -438,7 +408,7 @@ export class Player extends pixiJs.Container {
   }
 
   /**
-   * Получение урона
+   * Получение урона (вызывается напрямую сценой, а не через event bus)
    */
   public takeDamage(amount: number, source?: string): void {
     if (!this._isAlive || this.isInvincible) return;
@@ -446,7 +416,6 @@ export class Player extends pixiJs.Container {
     this.health = Math.max(0, this.health - amount);
     this.makeInvincible();
 
-    // Эффекты
     this.showDamageEffect();
     this.eventBus.emit(GameEvent.PLAYER_DAMAGE, {
       amount,
@@ -454,7 +423,6 @@ export class Player extends pixiJs.Container {
       source: source || "unknown",
     });
 
-    // Проверка смерти
     if (this.health <= 0) {
       this.die(source || "unknown");
     }
@@ -480,7 +448,7 @@ export class Player extends pixiJs.Container {
   }
 
   /**
-   * Смерть игрока
+   * Смерть игрока (обычная, с обычным уроном)
    */
   private die(cause: string): void {
     this._isAlive = false;
@@ -491,12 +459,10 @@ export class Player extends pixiJs.Container {
       position: { x: this.x, y: this.y },
     });
 
-    // Анимация смерти
     this.sprite.textures = this.deathTextures;
     this.sprite.loop = false;
     this.sprite.play();
 
-    // Затухание
     const fadeOut = () => {
       this.alpha -= 0.02;
       if (this.alpha > 0) {
@@ -507,6 +473,20 @@ export class Player extends pixiJs.Container {
     };
 
     setTimeout(fadeOut, 1000);
+  }
+
+  /**
+   * Безусловное убийство, минуя неуязвимость (для смерти от падения
+   * в пропасть и других случаев, которые не должны "прощаться" щитом).
+   */
+  public forceKill(cause: string): void {
+    if (!this._isAlive) return;
+
+    this.health = 0;
+    this.isInvincible = false;
+    this.invincibilityTimer = 0;
+
+    this.die(cause);
   }
 
   /**
@@ -524,6 +504,10 @@ export class Player extends pixiJs.Container {
     this.position.set(x, y);
     this.velocityX = 0;
     this.velocityY = 0;
+    this.isMoving = false;
+    this.isOnGround = false;
+    this.hasDoubleJump = false;
+    this.canDoubleJump = true;
 
     this.sprite.textures = this.idleTextures;
     this.sprite.loop = true;
@@ -534,17 +518,11 @@ export class Player extends pixiJs.Container {
     });
   }
 
-  /**
-   * Включение неуязвимости
-   */
   private makeInvincible(): void {
     this.isInvincible = true;
     this.invincibilityTimer = this.config.invincibilityDuration;
   }
 
-  /**
-   * Эффект получения урона
-   */
   private showDamageEffect(): void {
     this.damageEffect.visible = true;
     this.damageEffect.alpha = 0.8;
@@ -563,9 +541,6 @@ export class Player extends pixiJs.Container {
     fadeOut();
   }
 
-  /**
-   * Эффект лечения
-   */
   private showHealEffect(): void {
     const healEffect = new pixiJs.Graphics();
     healEffect.circle(0, 0, 30);
@@ -587,9 +562,6 @@ export class Player extends pixiJs.Container {
     fadeOut();
   }
 
-  /**
-   * Частицы при прыжке
-   */
   private emitJumpParticles(): void {
     for (let i = 0; i < 8; i++) {
       const particle = this.getDustParticle();
@@ -599,9 +571,6 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Частицы при двойном прыжке
-   */
   private emitDoubleJumpParticles(): void {
     for (let i = 0; i < 12; i++) {
       const particle = this.getDustParticle();
@@ -611,9 +580,6 @@ export class Player extends pixiJs.Container {
     }
   }
 
-  /**
-   * Частицы при приземлении
-   */
   private emitLandParticles(): void {
     for (let i = 0; i < 10; i++) {
       const particle = this.getDustParticle();
@@ -624,26 +590,28 @@ export class Player extends pixiJs.Container {
   }
 
   /**
-   * Получение свободной частицы пыли
+   * Получение свободной частицы пыли (с ограничением пула,
+   * чтобы при частых двойных прыжках количество частиц не росло
+   * бесконечно)
    */
   private getDustParticle(): pixiJs.Graphics {
-    // Находим неактивную частицу
     const particle = this.dustParticles.find((p) => p.alpha <= 0);
     if (particle) {
       particle.visible = true;
       return particle;
     }
 
-    // Создаём новую если все заняты
-    const newParticle = this.createDustParticle();
-    this.dustParticles.push(newParticle);
-    this.addChild(newParticle);
-    return newParticle;
+    if (this.dustParticles.length < this.maxDustParticles) {
+      const newParticle = this.createDustParticle();
+      this.dustParticles.push(newParticle);
+      this.addChild(newParticle);
+      return newParticle;
+    }
+
+    // Лимит достигнут — переиспользуем самую "старую" частицу пула
+    return this.dustParticles[0];
   }
 
-  /**
-   * Сбор предмета
-   */
   public collectItem(itemType: string, amount: number = 1): void {
     const current = this.inventory.get(itemType) || 0;
     this.inventory.set(itemType, current + amount);
@@ -655,9 +623,6 @@ export class Player extends pixiJs.Container {
     });
   }
 
-  /**
-   * Использование предмета
-   */
   public useItem(itemType: string): boolean {
     const current = this.inventory.get(itemType) || 0;
 
@@ -673,23 +638,14 @@ export class Player extends pixiJs.Container {
     return false;
   }
 
-  /**
-   * Добавление ключа
-   */
   public addKey(keyId: string): void {
     this.keys.add(keyId);
   }
 
-  /**
-   * Проверка ключа
-   */
   public hasKey(keyId: string): boolean {
     return this.keys.has(keyId);
   }
 
-  /**
-   * Взаимодействие с объектом
-   */
   public interact(target: string, type: string): void {
     this.eventBus.emit(GameEvent.PLAYER_INTERACT, {
       target,
@@ -697,22 +653,17 @@ export class Player extends pixiJs.Container {
     });
   }
 
-  /**
-   * Установка позиции
-   */
   public setPosition(x: number, y: number): void {
     this.position.set(x, y);
   }
 
-  /**
-   * Получение позиции
-   */
   public getPosition(): { x: number; y: number } {
     return { x: this.x, y: this.y };
   }
 
   /**
-   * Установка состояния "на земле"
+   * Установка состояния "на земле" — при переходе false -> true
+   * автоматически вызывает land() (сброс двойного прыжка, частицы)
    */
   public setOnGround(value: boolean): void {
     if (value && !this.isOnGround) {
@@ -721,9 +672,6 @@ export class Player extends pixiJs.Container {
     this.isOnGround = value;
   }
 
-  /**
-   * Сброс состояния
-   */
   public reset(): void {
     this.health = this.config.maxHealth;
     this._isAlive = true;
@@ -734,6 +682,8 @@ export class Player extends pixiJs.Container {
     this.velocityY = 0;
     this.isOnGround = false;
     this.isMoving = false;
+    this.hasDoubleJump = false;
+    this.canDoubleJump = true;
     this.alpha = 1;
     this.visible = true;
 
@@ -741,10 +691,7 @@ export class Player extends pixiJs.Container {
     this.keys.clear();
   }
 
-  /**
-   * Уничтожение игрока
-   */
-  public destroy(options?: any): void {
+  public destroy(options?: pixiJs.DestroyOptions): void {
     this.dustParticles.forEach((p) => p.destroy());
     this.dustParticles.length = 0;
 

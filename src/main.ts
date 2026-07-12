@@ -94,7 +94,7 @@ class Game {
 
     // Настройка игрового цикла
     this.app.ticker.add((ticker) => {
-      this.update(ticker.deltaTime, ticker.elapsedMS);
+      this.update(ticker.deltaTime);
     });
 
     // Обработчики событий окна

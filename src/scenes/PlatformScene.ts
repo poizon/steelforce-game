@@ -56,15 +56,12 @@ export class PlatformScene extends BaseScene {
 
   // Состояния
   private isLevelComplete: boolean = false;
-  private isPlayerDead: boolean = false;
   private levelLength: number = 3000;
   private playerStartX: number = 100;
   private playerStartY: number = 400;
 
-  // Физика (упрощённая)
+  // Гравитация (скорость игрока — в самом Player)
   private gravity: number = 0.5;
-  private playerVelocityY: number = 0;
-  private isOnGround: boolean = false;
 
   protected getSceneName(): SceneName {
     return "platform";
@@ -88,9 +85,11 @@ export class PlatformScene extends BaseScene {
   }
 
   protected bindEvents(): void {
-    // Управление игроком
-    this.inputManager.onKeyDown("ArrowLeft", () => this.movePlayer(-1, 0));
-    this.inputManager.onKeyDown("ArrowRight", () => this.movePlayer(1, 0));
+    // Горизонтальное движение опрашивается через isKeyDown() в update(),
+    // а не через onKeyDown — это корректно обрабатывает удержание клавиш
+    // и одновременное/чередующееся нажатие Left+Right без залипания.
+
+    // Прыжок — разовое действие, callback на нажатие уместен
     this.inputManager.onKeyDown("ArrowUp", () => this.jumpPlayer());
     this.inputManager.onKeyDown(" ", (event) => {
       event?.preventDefault();
@@ -102,7 +101,6 @@ export class PlatformScene extends BaseScene {
 
     // События игрока
     this.eventBus.on(GameEvent.PLAYER_DEATH, this.onPlayerDeath.bind(this));
-    // this.eventBus.on(GameEvent.PLAYER_DAMAGE, this.onPlayerDamage.bind(this));
   }
 
   protected async onEnter(): Promise<void> {
@@ -126,9 +124,9 @@ export class PlatformScene extends BaseScene {
   }
 
   public update(delta: number): void {
-    if (this.isPlayerDead || this.isLevelComplete) return;
+    if (!this.player.isAlive || this.isLevelComplete) return;
 
-    // Обновление игрока
+    // Обновление игрока (ввод + физика + анимации)
     this.updatePlayer(delta);
 
     // Обновление платформ
@@ -295,12 +293,10 @@ export class PlatformScene extends BaseScene {
 
     switch (type) {
       case "wood":
-        // Деревянные доски
         graphics.rect(0, 0, width, height);
         graphics.fill({ color: 0x8b4513 });
         graphics.stroke({ width: 2, color: 0x654321 });
 
-        // Текстура досок
         for (let i = 0; i < width; i += 20) {
           graphics.rect(i, 0, 2, height);
           graphics.fill({ color: 0x754321, alpha: 0.5 });
@@ -308,23 +304,19 @@ export class PlatformScene extends BaseScene {
         break;
 
       case "pipe":
-        // Металлические трубы
         graphics.roundRect(0, 0, width, height, height / 2);
         graphics.fill({ color: 0x666666 });
         graphics.stroke({ width: 1, color: 0x888888 });
 
-        // Блики на трубах
         graphics.rect(5, 2, width - 10, height / 3);
         graphics.fill({ color: 0x999999, alpha: 0.3 });
         break;
 
       case "concrete":
-        // Бетонные блоки
         graphics.rect(0, 0, width, height);
         graphics.fill({ color: 0x555555 });
         graphics.stroke({ width: 2, color: 0x666666 });
 
-        // Трещины
         for (let i = 0; i < 3; i++) {
           const cx = Math.random() * width;
           graphics.moveTo(cx, 0);
@@ -334,12 +326,10 @@ export class PlatformScene extends BaseScene {
         break;
 
       case "broken":
-        // Разрушенные платформы
         graphics.rect(0, 0, width, height);
         graphics.fill({ color: 0x8b4513, alpha: 0.7 });
         graphics.stroke({ width: 1, color: 0xff0000 });
 
-        // Дыры
         for (let i = 0; i < 5; i++) {
           const hx = Math.random() * width;
           graphics.circle(hx, height / 2, Math.random() * 5 + 3);
@@ -348,12 +338,10 @@ export class PlatformScene extends BaseScene {
         break;
 
       case "moving":
-        // Движущиеся платформы
         graphics.rect(0, 0, width, height);
         graphics.fill({ color: 0x4444ff });
         graphics.stroke({ width: 2, color: 0x6666ff });
 
-        // Индикатор движения
         graphics.moveTo(width / 2, 0);
         graphics.lineTo(width / 2, -10);
         graphics.stroke({ width: 2, color: 0x6666ff });
@@ -414,7 +402,6 @@ export class PlatformScene extends BaseScene {
 
       switch (data.type) {
         case "spike":
-          // Шипы
           for (let i = 0; i < 5; i++) {
             graphics.moveTo(i * 20, 30);
             graphics.lineTo(i * 20 + 10, 0);
@@ -424,7 +411,6 @@ export class PlatformScene extends BaseScene {
           break;
 
         case "fire":
-          // Огонь
           graphics.circle(15, 15, 15);
           graphics.fill({ color: 0xff4400, alpha: 0.8 });
           graphics.circle(15, 15, 10);
@@ -432,7 +418,6 @@ export class PlatformScene extends BaseScene {
           break;
 
         case "electric":
-          // Электричество
           for (let i = 0; i < 3; i++) {
             graphics.moveTo(5 + i * 10, 30);
             graphics.lineTo(10 + i * 10, 15);
@@ -443,7 +428,6 @@ export class PlatformScene extends BaseScene {
           break;
 
         case "smoke":
-          // Ядовитый дым
           for (let i = 0; i < 3; i++) {
             graphics.circle(10 + i * 15, 15, 12);
             graphics.fill({ color: 0x88ff00, alpha: 0.4 });
@@ -476,7 +460,6 @@ export class PlatformScene extends BaseScene {
     this.goalZone.fill({ color: 0x00ff00, alpha: 0.2 });
     this.goalZone.stroke({ width: 2, color: 0x00ff00 });
 
-    // Стрелка вниз
     this.goalZone.moveTo(2920, 385);
     this.goalZone.lineTo(2900, 405);
     this.goalZone.lineTo(2940, 405);
@@ -490,7 +473,7 @@ export class PlatformScene extends BaseScene {
    */
   private createPlayer(): void {
     this.player = new Player(this.eventBus);
-    this.player.position.set(this.playerStartX, this.playerStartY);
+    this.player.setPosition(this.playerStartX, this.playerStartY);
     this.platformContainer.addChild(this.player);
   }
 
@@ -498,27 +481,21 @@ export class PlatformScene extends BaseScene {
    * Создание эффектов
    */
   private createEffects(): void {
-    // Туман
     this.fogEffect = new Graphics();
     this.addChild(this.fogEffect);
 
-    // Частицы пыли
     for (let i = 0; i < 30; i++) {
       const particle = this.createDustParticle();
       this.dustParticles.push(particle);
       this.platformContainer.addChild(particle);
     }
 
-    // Опасная зона (красный низ экрана)
     this.dangerZone = new Graphics();
     this.dangerZone.rect(0, 500, 4000, 220);
     this.dangerZone.fill({ color: 0xff0000, alpha: 0.1 });
     this.platformContainer.addChild(this.dangerZone);
   }
 
-  /**
-   * Создание частицы пыли
-   */
   private createDustParticle(): Graphics {
     const particle = new Graphics();
     particle.circle(0, 0, Math.random() * 2 + 1);
@@ -534,7 +511,6 @@ export class PlatformScene extends BaseScene {
   private createHUD(): void {
     this.hudContainer = new Container();
 
-    // Цель
     this.objectiveText = new Text({
       text: "Доберитесь до станции",
       style: new TextStyle({
@@ -545,7 +521,6 @@ export class PlatformScene extends BaseScene {
     });
     this.objectiveText.position.set(20, 20);
 
-    // Дистанция
     this.distanceText = new Text({
       text: "Дистанция: 0м",
       style: new TextStyle({
@@ -556,7 +531,6 @@ export class PlatformScene extends BaseScene {
     });
     this.distanceText.position.set(20, 50);
 
-    // Предупреждение
     this.warningText = new Text({
       text: "",
       style: new TextStyle({
@@ -566,7 +540,10 @@ export class PlatformScene extends BaseScene {
       }),
     });
     this.warningText.anchor.set(0.5);
-    this.warningText.position.set(640, 360);
+    this.warningText.position.set(
+      this.app.screen.width / 2,
+      this.app.screen.height / 2,
+    );
     this.warningText.visible = false;
 
     this.hudContainer.addChild(
@@ -597,7 +574,6 @@ export class PlatformScene extends BaseScene {
           requestAnimationFrame(animate);
         } else {
           setTimeout(() => {
-            // Скрываем через 3 секунды
             const fadeOut = () => {
               this.objectiveText.alpha -= 0.02;
               if (this.objectiveText.alpha > 0) {
@@ -614,18 +590,17 @@ export class PlatformScene extends BaseScene {
   }
 
   /**
-   * Движение игрока
+   * Движение игрока (горизонталь) через API Player.
+   * moveHorizontal не трогает velocityY, поэтому гравитация,
+   * посчитанная в updatePlayer, не сбрасывается на каждом шаге.
    */
-  private movePlayer(dx: number, dy: number): void {
-    if (this.isPlayerDead || this.isLevelComplete) return;
+  private movePlayer(dx: number): void {
+    if (!this.player.isAlive || this.isLevelComplete) return;
 
-    const speed = 5;
-    this.player.x += dx * speed;
-    this.player.y += dy * speed;
+    this.player.moveHorizontal(dx);
 
-    // Ограничение движения
+    // Ограничение движения по уровню
     this.player.x = Math.max(0, Math.min(this.levelLength, this.player.x));
-    this.player.y = Math.max(0, Math.min(500, this.player.y));
 
     // Обновление цели камеры
     this.cameraTarget.x = this.player.x - 400;
@@ -633,32 +608,47 @@ export class PlatformScene extends BaseScene {
   }
 
   /**
-   * Прыжок игрока
+   * Прыжок игрока через API Player.
+   * Player.jump() сам решает: обычный прыжок (если isOnGround),
+   * двойной прыжок (если hasDoubleJump/canDoubleJump) или ничего.
    */
   private jumpPlayer(): void {
-    if (this.isPlayerDead || this.isLevelComplete) return;
-    if (!this.isOnGround) return;
+    if (!this.player.isAlive || this.isLevelComplete) return;
 
-    this.playerVelocityY = -12;
-    this.isOnGround = false;
-
+    this.player.jump();
     this.audioManager.playSFX("jump-sound", { volume: 0.3 });
   }
 
   /**
-   * Обновление игрока
+   * Обновление игрока: опрос горизонтального ввода + гравитация +
+   * анимации/эффекты через Player.update
    */
   private updatePlayer(delta: number): void {
-    // Гравитация
-    this.playerVelocityY += this.gravity * delta;
-    this.player.y += this.playerVelocityY;
+    // Опрос горизонтального ввода каждый кадр вместо onKeyDown-колбэков.
+    // Корректно обрабатывает удержание и одновременное/чередующееся
+    // нажатие ArrowLeft/ArrowRight — состояние всегда синхронизировано
+    // с реально зажатыми клавишами на этот конкретный кадр.
+    if (this.inputManager.isKeyDown("ArrowLeft")) {
+      this.movePlayer(-1);
+    } else if (this.inputManager.isKeyDown("ArrowRight")) {
+      this.movePlayer(1);
+    } else {
+      this.player.stopHorizontalMovement();
+    }
 
-    // Проверка падения
-    if (this.player.y > 550) {
+    // Гравитация — напрямую через публичное поле velocityY игрока
+    this.player.velocityY += this.gravity * delta;
+    this.player.y += this.player.velocityY;
+
+    // Ограничение по высоте (падение за пределы уровня)
+    this.player.y = Math.max(0, Math.min(500, this.player.y));
+
+    // Проверка падения в пропасть
+    if (this.player.y >= 500) {
       this.killPlayer("fall");
     }
 
-    // Анимация игрока
+    // Обновление анимаций/эффектов самого игрока
     this.player.update(delta);
   }
 
@@ -668,17 +658,16 @@ export class PlatformScene extends BaseScene {
   private updatePlatforms(delta: number): void {
     this.platforms.forEach((platform) => {
       if (platform.type === "moving") {
-        platform.moveOffset +=
-          platform.moveSpeed * delta * platform.moveDirection;
+        platform.moveOffset! +=
+          platform.moveSpeed! * delta * platform.moveDirection!;
 
-        if (Math.abs(platform.moveOffset) > platform.moveRange) {
-          platform.moveDirection *= -1;
+        if (Math.abs(platform.moveOffset!) > platform.moveRange!) {
+          platform.moveDirection! *= -1;
         }
 
-        platform.graphics.x = platform.x + platform.moveOffset;
+        platform.graphics.x = platform.x + platform.moveOffset!;
       }
 
-      // Разрушение broken платформ
       if (platform.type === "broken" && this.isPlayerOnPlatform(platform)) {
         platform.graphics.alpha -= delta * 0.01;
         if (platform.graphics.alpha <= 0) {
@@ -717,24 +706,20 @@ export class PlatformScene extends BaseScene {
    * Обновление камеры
    */
   private updateCamera(delta: number): void {
-    // Плавное следование камеры
     this.cameraOffset.x +=
       (this.cameraTarget.x - this.cameraOffset.x) * 0.1 * delta;
     this.cameraOffset.y +=
       (this.cameraTarget.y - this.cameraOffset.y) * 0.1 * delta;
 
-    // Ограничение камеры
     this.cameraOffset.x = Math.max(
       0,
       Math.min(this.levelLength - 1280, this.cameraOffset.x),
     );
     this.cameraOffset.y = Math.max(0, Math.min(200, this.cameraOffset.y));
 
-    // Применение смещения
     this.platformContainer.x = -this.cameraOffset.x;
     this.platformContainer.y = -this.cameraOffset.y;
 
-    // Параллакс для фона
     this.background.x = -this.cameraOffset.x * 0.3;
     this.background.y = -this.cameraOffset.y * 0.1;
   }
@@ -743,7 +728,6 @@ export class PlatformScene extends BaseScene {
    * Обновление эффектов
    */
   private updateEffects(delta: number): void {
-    // Туман
     this.fogEffect.clear();
     for (let i = 0; i < 10; i++) {
       const x =
@@ -754,7 +738,6 @@ export class PlatformScene extends BaseScene {
       this.fogEffect.fill({ color: 0x666666, alpha: 0.05 });
     }
 
-    // Частицы пыли
     this.dustParticles.forEach((particle) => {
       particle.y -= delta * 0.2;
       particle.x += Math.sin(Date.now() * 0.001 + particle.y) * delta * 0.1;
@@ -770,7 +753,7 @@ export class PlatformScene extends BaseScene {
    * Проверка столкновений
    */
   private checkCollisions(): void {
-    this.isOnGround = false;
+    let landedOnPlatform = false;
 
     // Проверка платформ
     this.platforms.forEach((platform) => {
@@ -779,21 +762,23 @@ export class PlatformScene extends BaseScene {
       const playerBounds = this.player.getBounds();
       const platformBounds = platform.graphics.getBounds();
 
-      // Столкновение сверху
       if (
         playerBounds.x < platformBounds.x + platformBounds.width &&
         playerBounds.x + playerBounds.width > platformBounds.x &&
         playerBounds.y + playerBounds.height >= platformBounds.y &&
         playerBounds.y + playerBounds.height <= platformBounds.y + 10 &&
-        this.playerVelocityY >= 0
+        this.player.velocityY >= 0
       ) {
         this.player.y = platformBounds.y - playerBounds.height;
-        this.playerVelocityY = 0;
-        this.isOnGround = true;
+        landedOnPlatform = true;
       }
     });
 
-    // Проверка препятствий
+    // setOnGround сам вызовет land() при переходе false -> true
+    // (сброс velocityY, двойного прыжка, частицы приземления)
+    this.player.setOnGround(landedOnPlatform);
+
+    // Проверка препятствий — урон идёт через API игрока
     this.obstacles.forEach((obstacle) => {
       if (!obstacle.active) return;
 
@@ -843,33 +828,25 @@ export class PlatformScene extends BaseScene {
   }
 
   /**
-   * Нанесение урона игроку
+   * Нанесение урона игроку — напрямую через API Player.
+   * Player.takeDamage сам проверяет isAlive/isInvincible,
+   * поэтому отдельный cooldown в сцене не нужен.
    */
   private damagePlayer(amount: number, source: string): void {
-    this.eventBus.emit(GameEvent.PLAYER_DAMAGE, {
-      amount,
-      currentHealth: 80, // Упрощённо
-      source,
-    });
-
+    this.player.takeDamage(amount, source);
     this.audioManager.playSFX("damage-sound", { volume: 0.5 });
-
-    // Эффект красного экрана
     this.showDamageEffect();
   }
 
   /**
-   * Убийство игрока
+   * Убийство игрока (падение в пропасть).
+   * Используем forceKill — он убивает безусловно, минуя щит
+   * неуязвимости, чтобы падение в пропасть не "прощалось"
+   * недавно полученным уроном.
    */
   private killPlayer(cause: string): void {
-    if (this.isPlayerDead) return;
-
-    this.isPlayerDead = true;
-
-    this.eventBus.emit(GameEvent.PLAYER_DEATH, {
-      cause,
-      position: { x: this.player.x, y: this.player.y },
-    });
+    if (!this.player.isAlive) return;
+    this.player.forceKill(cause);
   }
 
   /**
@@ -885,7 +862,6 @@ export class PlatformScene extends BaseScene {
       to: "elevator",
     });
 
-    // Задержка перед переходом
     setTimeout(() => {
       this.sceneManager.switchTo(
         "elevator",
@@ -904,9 +880,6 @@ export class PlatformScene extends BaseScene {
   private updateHUD(): void {
     const distance = Math.floor(this.player.x / 10);
     this.distanceText.text = `Дистанция: ${distance}м`;
-
-    // Предупреждение при низком здоровье
-    // (упрощённо, просто для демонстрации)
   }
 
   /**
@@ -914,12 +887,13 @@ export class PlatformScene extends BaseScene {
    */
   private showDamageEffect(): void {
     const overlay = new Graphics();
-    overlay.rect(0, 0, 1280, 720);
+    overlay.rect(0, 0, this.app.screen.width, this.app.screen.height);
     overlay.fill({ color: 0xff0000, alpha: 0.3 });
     this.addChild(overlay);
 
     setTimeout(() => {
       this.removeChild(overlay);
+      overlay.destroy();
     }, 200);
   }
 
@@ -929,25 +903,13 @@ export class PlatformScene extends BaseScene {
   private onPlayerDeath(): void {
     this.audioManager.playSFX("death-sound", { volume: 0.7 });
 
-    // Показываем сообщение
     this.warningText.text = "ВЫ ПОГИБЛИ";
     this.warningText.visible = true;
 
-    // Рестарт через 2 секунды
     setTimeout(() => {
       this.sceneManager.switchTo("platform");
     }, 2000);
   }
-
-  /**
-   * Обработчик урона игроку
-   */
-  // private onPlayerDamage(data: {
-  //   amount: number;
-  //   currentHealth: number;
-  // }): void {
-  //   // Обновление HUD или эффектов
-  // }
 
   /**
    * Обработчик Escape
