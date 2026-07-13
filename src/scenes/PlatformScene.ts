@@ -63,6 +63,10 @@ export class PlatformScene extends BaseScene {
   // Гравитация (скорость игрока — в самом Player)
   private gravity: number = 0.5;
 
+  // Отслеживание фронта нажатия пробела — чтобы удержание клавиши
+  // не спамило повторные прыжки через key-repeat InputManager
+  private wasJumpKeyDown: boolean = false;
+
   protected getSceneName(): SceneName {
     return "platform";
   }
@@ -85,16 +89,11 @@ export class PlatformScene extends BaseScene {
   }
 
   protected bindEvents(): void {
-    // Горизонтальное движение опрашивается через isKeyDown() в update(),
-    // а не через onKeyDown — это корректно обрабатывает удержание клавиш
-    // и одновременное/чередующееся нажатие Left+Right без залипания.
-
-    // Прыжок — разовое действие, callback на нажатие уместен
-    this.inputManager.onKeyDown("ArrowUp", () => this.jumpPlayer());
-    this.inputManager.onKeyDown(" ", (event) => {
-      event?.preventDefault();
-      this.jumpPlayer();
-    });
+    // Горизонтальное движение опрашивается через isKeyDown() в update().
+    // Прыжок тоже опрашивается в update() — см. updatePlayer() —
+    // с отслеживанием фронта нажатия, а не через onKeyDown, чтобы
+    // встроенный key-repeat InputManager не спамил повторными прыжками
+    // при удержании клавиши.
 
     // Пауза
     this.inputManager.onKeyDown("Escape", this.onEscape.bind(this));
@@ -624,10 +623,7 @@ export class PlatformScene extends BaseScene {
    * анимации/эффекты через Player.update
    */
   private updatePlayer(delta: number): void {
-    // Опрос горизонтального ввода каждый кадр вместо onKeyDown-колбэков.
-    // Корректно обрабатывает удержание и одновременное/чередующееся
-    // нажатие ArrowLeft/ArrowRight — состояние всегда синхронизировано
-    // с реально зажатыми клавишами на этот конкретный кадр.
+    // Горизонтальное движение
     if (this.inputManager.isKeyDown("ArrowLeft")) {
       this.movePlayer(-1);
     } else if (this.inputManager.isKeyDown("ArrowRight")) {
@@ -635,6 +631,17 @@ export class PlatformScene extends BaseScene {
     } else {
       this.player.stopHorizontalMovement();
     }
+
+    // Прыжок — реагируем только на переход "не нажато -> нажато" (rising edge).
+    // Код пробела в KeyboardEvent.code — "Space" (а не " "), и мы опрашиваем
+    // сырое состояние клавиши, минуя key-repeat InputManager. Один физический
+    // прыжок клавиши = ровно один вызов jump(); повторные вызовы начинаются
+    // заново только после отпускания и нового нажатия.
+    const isJumpKeyDown = this.inputManager.isKeyDown("Space");
+    if (isJumpKeyDown && !this.wasJumpKeyDown) {
+      this.jumpPlayer();
+    }
+    this.wasJumpKeyDown = isJumpKeyDown;
 
     // Гравитация — напрямую через публичное поле velocityY игрока
     this.player.velocityY += this.gravity * delta;
@@ -755,7 +762,6 @@ export class PlatformScene extends BaseScene {
   private checkCollisions(): void {
     let landedOnPlatform = false;
 
-    // Проверка платформ
     this.platforms.forEach((platform) => {
       if (!platform.graphics.visible) return;
 
@@ -769,16 +775,21 @@ export class PlatformScene extends BaseScene {
         playerBounds.y + playerBounds.height <= platformBounds.y + 10 &&
         this.player.velocityY >= 0
       ) {
-        this.player.y = platformBounds.y - playerBounds.height;
+        // ВАЖНО: platformBounds.y — глобальная координата, а this.player.y —
+        // локальная (относительно platformContainer). Компенсируем смещение
+        // камеры (platformContainer.y), иначе снэп позиции будет постоянно
+        // "промахиваться" на величину текущего скролла камеры, из-за чего
+        // игрок бесконечно дёргается вверх-вниз при приземлении.
+        this.player.y =
+          platformBounds.y - playerBounds.height - this.platformContainer.y;
         landedOnPlatform = true;
       }
     });
 
-    // setOnGround сам вызовет land() при переходе false -> true
-    // (сброс velocityY, двойного прыжка, частицы приземления)
     this.player.setOnGround(landedOnPlatform);
 
-    // Проверка препятствий — урон идёт через API игрока
+    // Проверка препятствий — этот блок не трогаем, тут только boolean-сравнения
+    // глобальных bounds, без присвоения в локальные координаты — багов нет.
     this.obstacles.forEach((obstacle) => {
       if (!obstacle.active) return;
 
